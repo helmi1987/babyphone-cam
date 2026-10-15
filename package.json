@@ -1,0 +1,25 @@
+{
+  "name": "babyphone-cam",
+  "version": "0.1.0",
+  "description": "Browser-only baby monitor for the home network with a mediasoup SFU",
+  "license": "AGPL-3.0-only",
+  "author": "Stefan Diethelm",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "esbuild public/src/main.js --bundle --format=esm --minify --target=es2020 --outfile=public/app.js",
+    "start": "node server/index.js"
+  },
+  "dependencies": {
+    "mediasoup": "^3.30.0",
+    "selfsigned": "^5.5.0",
+    "ws": "^8.22.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2",
+    "mediasoup-client": "^3.24.5"
+  }
+}

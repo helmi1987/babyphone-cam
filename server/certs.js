@@ -1,0 +1,351 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Stefan Diethelm
+//
+// TLS certificate selection. Logic follows dropnook (AGPL-3.0):
+// CertWarden -> TLS_CERT/TLS_KEY -> CERTS_DIR scan -> self-signed.
+
+import fs from 'node:fs';
+import path from 'node:path';
+import tls from 'node:tls';
+import { X509Certificate, createPrivateKey } from 'node:crypto';
+import selfsigned from 'selfsigned';
+import { config, log } from './config.js';
+
+const DAY = 86400 * 1000;
+const POLL_FILES_MS = 5 * 60 * 1000;
+const CW_CHECK_MS = 6 * 3600 * 1000;
+const CW_DIR = path.join(config.dataDir, '.certwarden');
+const SELF_DIR = path.join(config.dataDir, '.selfsigned');
+
+export function pemBlocks(text, kind) {
+  const re = new RegExp(`-----BEGIN [A-Z ]*${kind}-----[A-Za-z0-9+/=\\s]+?-----END [A-Z ]*${kind}-----`, 'g');
+  return text.match(re) || [];
+}
+
+// Facts of the leaf certificate: {expires(ms), names[]} or null.
+export function certFacts(certPem) {
+  try {
+    const x = new X509Certificate(certPem);
+    const names = [];
+    for (const part of (x.subjectAltName || '').split(',')) {
+      const m = part.trim().match(/^DNS:(.+)$/i);
+      if (m) names.push(m[1].trim().toLowerCase());
+    }
+    const cn = (x.subject || '').match(/(?:^|\n)CN=([^\n]+)/);
+    if (cn && !names.includes(cn[1].trim().toLowerCase())) names.push(cn[1].trim().toLowerCase());
+    return { expires: Date.parse(x.validTo), names, x };
+  } catch {
+    return null;
+  }
+}
+
+// Validate a PEM pair: key matches leaf, not expired. Returns facts or throws.
+export function checkPair(certPem, keyPem, label) {
+  const blocks = pemBlocks(certPem, 'CERTIFICATE');
+  if (!blocks.length) throw new Error(`${label}: no certificate`);
+  const facts = certFacts(blocks[0]);
+  if (!facts) throw new Error(`${label}: unreadable certificate`);
+  let key;
+  try {
+    key = createPrivateKey(keyPem);
+  } catch {
+    throw new Error(`${label}: unreadable private key`);
+  }
+  if (!facts.x.checkPrivateKey(key)) throw new Error(`${label}: key and certificate do not belong together`);
+  if (!(facts.expires > Date.now())) throw new Error(`${label}: certificate has expired`);
+  return { expires: facts.expires, names: facts.names };
+}
+
+function readPair(certPath, keyPath, label) {
+  const cert = fs.readFileSync(certPath, 'utf8');
+  const key = fs.readFileSync(keyPath, 'utf8');
+  const facts = checkPair(cert, key, label);
+  return { cert, key, ...facts, source: label, files: [certPath, keyPath] };
+}
+
+function pairIn(folder) {
+  const c = path.join(folder, 'fullchain.pem');
+  const k = path.join(folder, 'privkey.pem');
+  try {
+    if (fs.statSync(c).isFile() && fs.statSync(k).isFile()) return [c, k];
+  } catch { /* missing */ }
+  return null;
+}
+
+// ---------------------------------------------------------------- CertWarden
+
+export function certwardenApi(url = config.certwardenUrl) {
+  let base = url.replace(/\/+$/, '');
+  const at = base.search(/\/certwarden(\/|$)/);
+  if (at >= 0) base = base.slice(0, at);
+  return `${base.replace(/\/+$/, '')}/certwarden/api/v1/download`;
+}
+
+function certwardenEnabled() {
+  return Boolean(config.certwardenUrl);
+}
+
+function certwardenMissing() {
+  const names = ['CERTWARDEN_ENDPOINT_URL', 'CERT_NAME', 'CERT_CERT_API', 'CERT_KEY_API'];
+  const vals = [config.certwardenUrl, config.certName, config.certCertApi, config.certKeyApi];
+  return names.filter((_, i) => !vals[i]);
+}
+
+async function certwardenFetch() {
+  const name = config.certName;
+  if (!/^[A-Za-z0-9._~-]+$/.test(name)) throw new Error(`"${name}" is not a Cert Warden name`);
+  let res;
+  try {
+    res = await fetch(`${certwardenApi()}/privatecertchains/${name}`, {
+      headers: { 'X-API-Key': `${config.certCertApi}.${config.certKeyApi}` },
+      signal: AbortSignal.timeout(30000),
+    });
+  } catch (e) {
+    throw new Error(`Cert Warden not reachable: ${e.cause?.code || e.name || 'error'}`);
+  }
+  if (!res.ok) throw new Error(`Cert Warden answered ${res.status} for ${name} (name or API keys?)`);
+  const text = (await res.text()).slice(0, 1024 * 1024);
+  const keys = pemBlocks(text, 'PRIVATE KEY');
+  const certs = pemBlocks(text, 'CERTIFICATE');
+  if (keys.length !== 1 || !certs.length) throw new Error(`no certificate with its key in Cert Warden's answer for ${name}`);
+  const chain = `${certs.join('\n')}\n`;
+  const key = `${keys[0]}\n`;
+  checkPair(chain, key, name);
+  return { chain, key };
+}
+
+function writeSecret(file, content) {
+  const tmp = path.join(path.dirname(file), `.${path.basename(file)}.new`);
+  fs.writeFileSync(tmp, content, { mode: 0o600 });
+  fs.chmodSync(tmp, 0o600);
+  fs.renameSync(tmp, file);
+}
+
+function storePair(folder, chain, key) {
+  const pair = pairIn(folder);
+  if (pair && fs.readFileSync(pair[0], 'utf8') === chain && fs.readFileSync(pair[1], 'utf8') === key) return false;
+  fs.mkdirSync(folder, { recursive: true, mode: 0o700 });
+  // key first, certificate last
+  writeSecret(path.join(folder, 'privkey.pem'), key);
+  writeSecret(path.join(folder, 'fullchain.pem'), chain);
+  return true;
+}
+
+function certwardenDue() {
+  const pair = pairIn(CW_DIR);
+  if (!pair) return true;
+  const facts = certFacts(fs.readFileSync(pair[0], 'utf8'));
+  return !facts || facts.expires - Date.now() < config.certCheckDays * DAY;
+}
+
+// Fetch when due. Returns true if the stored pair changed.
+async function certwardenSync() {
+  const missing = certwardenMissing();
+  if (missing.length) {
+    log(`Cert Warden: missing ${missing.join(', ')}`);
+    return false;
+  }
+  try {
+    if (!certwardenDue()) return false;
+    const { chain, key } = await certwardenFetch();
+    const changed = storePair(CW_DIR, chain, key);
+    const facts = certFacts(chain);
+    log(`Cert Warden: ${config.certName} ${changed ? 'fetched' : 'unchanged'}, valid until ${new Date(facts.expires).toISOString().slice(0, 10)}`);
+    return changed;
+  } catch (e) {
+    log(`Cert Warden: ${e.message} - keeping what is there`);
+    return false;
+  }
+}
+
+// ---------------------------------------------------------------- CERTS_DIR
+
+function listDirs(dir) {
+  try {
+    return fs.readdirSync(dir, { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => path.join(dir, d.name));
+  } catch {
+    return [];
+  }
+}
+
+function scanCertsDir() {
+  const folders = [...listDirs(path.join(config.certsDir, 'live')), ...listDirs(config.certsDir)];
+  const found = [];
+  const seen = new Set();
+  for (const folder of folders) {
+    const pair = pairIn(folder);
+    if (!pair) continue;
+    let real;
+    try {
+      real = fs.realpathSync(pair[0]);
+    } catch {
+      continue;
+    }
+    if (seen.has(real)) continue;
+    seen.add(real);
+    try {
+      found.push(readPair(pair[0], pair[1], pair[0]));
+    } catch {
+      // invalid, expired or unreadable: skip
+    }
+  }
+  found.sort((a, b) => b.expires - a.expires); // longest valid first = default
+  return found;
+}
+
+// ---------------------------------------------------------------- self-signed
+
+let selfCache = null;
+
+async function selfSigned() {
+  if (selfCache && selfCache.expires - Date.now() > 30 * DAY) return selfCache;
+  const pair = pairIn(SELF_DIR);
+  if (pair) {
+    try {
+      const p = readPair(pair[0], pair[1], 'self-signed');
+      if (p.expires - Date.now() > 30 * DAY) return (selfCache = p);
+    } catch { /* regenerate */ }
+  }
+  const now = new Date();
+  const gen = await selfsigned.generate([{ name: 'commonName', value: 'babyphone-cam' }], {
+    keyType: 'ec',
+    curve: 'P-256',
+    algorithm: 'sha256',
+    notBeforeDate: new Date(now.getTime() - DAY),
+    notAfterDate: new Date(now.getTime() + 825 * DAY),
+    extensions: [
+      { name: 'basicConstraints', cA: false },
+      { name: 'keyUsage', digitalSignature: true, keyEncipherment: true },
+      { name: 'extKeyUsage', serverAuth: true },
+      {
+        name: 'subjectAltName',
+        altNames: [
+          { type: 2, value: 'babyphone-cam' },
+          { type: 2, value: 'localhost' },
+          { type: 7, ip: '127.0.0.1' },
+          ...(/^\d+\.\d+\.\d+\.\d+$/.test(config.announcedIp) ? [{ type: 7, ip: config.announcedIp }] : []),
+        ],
+      },
+    ],
+  });
+  try {
+    storePair(SELF_DIR, gen.cert, gen.private);
+  } catch (e) {
+    log(`TLS: cannot store self-signed certificate (${e.code || 'error'})`);
+  }
+  const facts = checkPair(gen.cert, gen.private, 'self-signed');
+  selfCache = { cert: gen.cert, key: gen.private, ...facts, source: 'self-signed', files: [] };
+  return selfCache;
+}
+
+// ---------------------------------------------------------------- selection
+
+async function choose() {
+  if (certwardenEnabled()) {
+    const pair = pairIn(CW_DIR);
+    if (pair) {
+      try {
+        return [readPair(pair[0], pair[1], 'Cert Warden')];
+      } catch (e) {
+        log(`TLS: ${e.message}`);
+      }
+    }
+  }
+  if (config.tlsCert || config.tlsKey) {
+    try {
+      return [readPair(config.tlsCert, config.tlsKey, 'TLS_CERT')];
+    } catch (e) {
+      log(`TLS: TLS_CERT/TLS_KEY not usable: ${e.code || e.message}`);
+    }
+  }
+  const scanned = scanCertsDir();
+  if (scanned.length) return scanned;
+  log('TLS: WARNING no valid certificate found, using self-signed');
+  return [await selfSigned()];
+}
+
+function fingerprint(list) {
+  return list.map((c) => `${c.source}|${c.expires}|${c.cert.length}|${c.cert.slice(-64)}`).join(';');
+}
+
+function matchName(host, name) {
+  if (name.startsWith('*.')) {
+    const suffix = name.slice(1);
+    return host.endsWith(suffix) && !host.slice(0, -suffix.length).includes('.');
+  }
+  return host === name;
+}
+
+export class CertManager {
+  constructor() {
+    this.list = [];
+    this.contexts = [];
+    this.server = null;
+    this.print = '';
+  }
+
+  async init() {
+    if (certwardenEnabled()) await certwardenSync();
+    this.apply(await choose());
+  }
+
+  apply(list) {
+    this.list = list;
+    this.contexts = list.map((c) => ({ names: c.names, ctx: tls.createSecureContext({ cert: c.cert, key: c.key }) }));
+    this.print = fingerprint(list);
+    for (const c of list) {
+      log(`TLS: using ${c.source} (${c.names.join(', ') || 'no names'}), valid until ${new Date(c.expires).toISOString().slice(0, 10)}`);
+    }
+  }
+
+  // Options for https.createServer.
+  serverOptions() {
+    const d = this.list[0];
+    return {
+      cert: d.cert,
+      key: d.key,
+      SNICallback: (servername, cb) => cb(null, this.contextFor(servername)),
+    };
+  }
+
+  contextFor(servername) {
+    const host = String(servername || '').toLowerCase();
+    if (host && this.contexts.length > 1) {
+      for (const c of this.contexts) if (c.names.some((n) => matchName(host, n))) return c.ctx;
+    }
+    return this.contexts[0].ctx;
+  }
+
+  // All names of served certificates (for the host check).
+  names() {
+    return this.list.flatMap((c) => c.names);
+  }
+
+  attach(server) {
+    this.server = server;
+    this.filesTimer = setInterval(() => this.reload().catch((e) => log(`TLS: reload failed: ${e.message}`)), POLL_FILES_MS);
+    this.filesTimer.unref();
+    if (certwardenEnabled()) {
+      this.cwTimer = setInterval(async () => {
+        if (await certwardenSync()) await this.reload();
+      }, CW_CHECK_MS);
+      this.cwTimer.unref();
+    }
+  }
+
+  async reload() {
+    const list = await choose();
+    if (fingerprint(list) === this.print) return;
+    this.apply(list);
+    if (this.server) {
+      const d = list[0];
+      this.server.setSecureContext({ cert: d.cert, key: d.key });
+      log('TLS: certificate reloaded');
+    }
+  }
+
+  stop() {
+    clearInterval(this.filesTimer);
+    clearInterval(this.cwTimer);
+  }
+}
