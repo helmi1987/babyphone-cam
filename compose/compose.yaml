@@ -8,17 +8,19 @@ services:
     image: ghcr.io/helmi1987/babyphone-cam:${BABYPHONE_VERSION:-latest}
     container_name: babyphone
     restart: unless-stopped
-    user: "${PUID:-99}:${PGID:-100}"
     read_only: true
     tmpfs: [/tmp:size=16m]
     cap_drop: [ALL]
+    # Only for the entrypoint: chown DATA_DIR, then switch to PUID:PGID
+    cap_add: [CHOWN, DAC_OVERRIDE, SETUID, SETGID]
     security_opt: [no-new-privileges:true]
     sysctls:
       net.ipv4.ip_unprivileged_port_start: 80
-    mem_limit: 1g
     pids_limit: 200
     environment:
       - TZ=${TZ:-}
+      - PUID=${PUID:-99}
+      - PGID=${PGID:-100}
       # Access
       - PARENT_PIN=${PARENT_PIN:?PARENT_PIN is missing in .env}
       - CHILD_PIN=${CHILD_PIN:?CHILD_PIN is missing in .env}
@@ -72,6 +74,7 @@ services:
         ipv4_address: ${BABYPHONE_IP:?BABYPHONE_IP is missing in .env}
     labels:
       net.unraid.docker.webui: ${WEBUI:-https://[IP]/}
+      net.unraid.docker.icon: https://raw.githubusercontent.com/helmi1987/babyphone-cam/main/.github/icons/babyphone.png
     logging:
       driver: json-file
       options:

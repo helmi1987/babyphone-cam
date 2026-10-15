@@ -20,11 +20,10 @@ WORKDIR /app
 COPY --from=build /app/node_modules/ node_modules/
 COPY --from=build /app/public/ public/
 COPY server/ server/
-COPY package.json LICENSE ./
-RUN mkdir -p /data && chown node:node /data
-USER node
+COPY package.json LICENSE entrypoint.sh ./
+RUN chmod 755 /app/entrypoint.sh && command -v setpriv
 EXPOSE 443 80 40000/udp 40000/tcp
 # Healthy as soon as the HTTPS port accepts connections
 HEALTHCHECK --interval=30s --timeout=5s --retries=3 --start-period=30s \
   CMD ["node", "-e", "require('net').connect(+process.env.HTTPS_PORT||443,'127.0.0.1').on('connect',()=>process.exit(0)).on('error',()=>process.exit(1))"]
-CMD ["node", "server/index.js"]
+ENTRYPOINT ["/app/entrypoint.sh"]
