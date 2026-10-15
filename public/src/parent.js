@@ -302,6 +302,13 @@ export function mountParent(root, cfg, nav) {
     });
     tile.talkBtn = h('button', { type: 'button', class: 'talk' }, t('talk'));
     bindTalk(tile);
+    tile.flipBtn = h('button', {
+      type: 'button',
+      class: 'small flip',
+      onclick: () => {
+        if (hub.connected) hub.request('switchCamera', { deviceId: id }).catch(() => {});
+      },
+    }, t('switchCamera'));
     const closeBtn = h('button', {
       type: 'button',
       class: 'close-big',
@@ -313,7 +320,7 @@ export function mountParent(root, cfg, nav) {
     }, '×');
     const controls = h('div', { class: 'controls' },
       h('div', { class: 'vol' }, slider, tile.volLabel, tile.muteBtn),
-      tile.talkBtn);
+      h('div', { class: 'actions' }, tile.talkBtn, tile.flipBtn));
     for (const ev of ['click', 'pointerdown', 'pointerup']) controls.addEventListener(ev, (e) => e.stopPropagation());
 
     tile.el = h('article', { class: 'tile', tabIndex: 0 },
@@ -354,6 +361,8 @@ export function mountParent(root, cfg, nav) {
     tile.el.classList.toggle('phone', d.mode === 'phone');
     tile.levelEl.style.width = `${online ? Math.max(0, Math.min(100, Number(d.level) || 0)) : 0}%`;
     tile.talkBtn.disabled = !online || !mediaAvailable();
+    tile.flipBtn.hidden = d.mode !== 'cam';
+    tile.flipBtn.disabled = !online;
     if (!online && talk?.deviceId === tile.id) stopTalk();
   }
 

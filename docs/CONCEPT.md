@@ -109,17 +109,20 @@ Client -> server (requests):
 | `setLayer` | `consumerId, spatialLayer` (0 low, 1 high) | – |
 | `activity` | child only: `sound:bool, motion:bool, level:0..100` | – |
 | `ackAlarm` | parent only: `alarmId` | – |
+| `setFacing` | child only: `facing:"user"\|"environment"` | – |
+| `switchCamera` | parent only: `deviceId` (cam child) | – |
 | `leave` | – | – (child: removed at once, no alarm) |
 
 Server -> client (push):
 
 | t | To | Fields |
 |---|---|---|
-| `devices` | parents | `list:[{deviceId, name, mode, online, since, lastSeen, producers:[{id, kind, source}], sound, motion, level}]` (on every change; `level` throttled to 2/s) |
+| `devices` | parents | `list:[{deviceId, name, mode, facing, online, since, lastSeen, producers:[{id, kind, source}], sound, motion, level}]` (on every change; `level` throttled to 2/s) |
 | `alarm` | parents | `{alarmId, deviceId, name, reason:"child_offline", since}` |
 | `alarmCleared` | parents | `{alarmId}` (acked by any parent, or child back online) |
 | `talk` | one child | `{producerId}` consume and play |
 | `talkEnd` | one child | `{producerId}` |
+| `switchCamera` | one child | – (flip front/rear, then `setFacing`) |
 
 Media:
 - Child cam: video (simulcast 2 layers: `scaleResolutionDownBy:4,

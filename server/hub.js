@@ -110,6 +110,8 @@ export class Hub {
       case 'resumeConsumer': return this.resumeConsumer(conn, m);
       case 'setLayer': return this.setLayer(conn, m);
       case 'activity': return this.activity(conn, m);
+      case 'setFacing': return this.setFacing(conn, m);
+      case 'switchCamera': return this.switchCamera(conn, m);
       case 'ackAlarm': return this.ackAlarm(conn, m);
       case 'leave': return this.leave(conn);
       default: fail('unknown request');
@@ -340,6 +342,7 @@ export class Hub {
       deviceId: c.deviceId,
       name: c.name,
       mode: c.mode,
+      facing: c.facing || null,
       online: c.online,
       since: c.since,
       lastSeen: c.lastSeen,
@@ -380,6 +383,29 @@ export class Hub {
     Object.assign(rec, { sound, motion, level, lastSeen: Date.now() });
     if (changed) this.broadcastDevices();
     else if (levelChanged) this.broadcastDevices(true);
+    return null;
+  }
+
+  setFacing(conn, m) {
+    if (conn.role !== 'child') fail('child only');
+    const rec = this.recordOf(conn);
+    if (!rec) fail('not joined');
+    if (m.facing !== 'user' && m.facing !== 'environment') fail('invalid facing');
+    if (rec.facing !== m.facing) {
+      rec.facing = m.facing;
+      this.broadcastDevices();
+    }
+    return null;
+  }
+
+  // Parent asks a cam child to switch between front and rear camera
+  switchCamera(conn, m) {
+    if (conn.role !== 'parent') fail('parent only');
+    const child = this.children.get(String(m.deviceId ?? ''));
+    if (!child?.online || !child.conn) fail('child not online');
+    if (child.mode !== 'cam') fail('child has no camera');
+    this.send(child.conn, { t: 'switchCamera' });
+    log(`camera switch requested for ${JSON.stringify(child.name)}`);
     return null;
   }
 

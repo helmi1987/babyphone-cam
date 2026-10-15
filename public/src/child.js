@@ -184,6 +184,7 @@ export function mountChild(root, cfg, nav) {
         r.hub.on('close', () => onClose(r));
         r.hub.on('talk', (m) => onTalk(r, m.producerId));
         r.hub.on('talkEnd', (m) => endTalk(r, m.producerId));
+        r.hub.on('switchCamera', () => flipCamera());
         r.hub.start();
         showBar();
       })
@@ -196,10 +197,51 @@ export function mountChild(root, cfg, nav) {
   function getStream(mode, facing) {
     // Raw-ish audio so quiet sounds stay audible; echo cancellation for talk playback.
     const audio = { echoCancellation: true, noiseSuppression: false, autoGainControl: false };
-    const video = mode === 'cam'
-      ? { facingMode: { ideal: facing }, width: { ideal: 1280 }, height: { ideal: 720 }, frameRate: { ideal: 15, max: 30 } }
-      : false;
+    const video = mode === 'cam' ? videoConstraints(facing) : false;
     return navigator.mediaDevices.getUserMedia({ audio, video });
+  }
+
+  function videoConstraints(facing) {
+    return { facingMode: { ideal: facing }, width: { ideal: 1280 }, height: { ideal: 720 }, frameRate: { ideal: 15, max: 30 } };
+  }
+
+  // Front <-> rear camera, keeps the audio track and the producer
+  async function flipCamera() {
+    const r = run;
+    if (!r?.stream || r.mode !== 'cam' || r.flipping) return;
+    r.flipping = true;
+    const next = r.facing === 'user' ? 'environment' : 'user';
+    const oldV = r.stream.getVideoTracks()[0];
+    // iOS allows only one camera at a time: stop the old one first
+    oldV?.stop();
+    let track = null;
+    let facing = next;
+    try {
+      track = (await navigator.mediaDevices.getUserMedia({ video: videoConstraints(next) })).getVideoTracks()[0];
+    } catch {
+      facing = r.facing;
+      track = (await navigator.mediaDevices.getUserMedia({ video: videoConstraints(facing) }).catch(() => null))?.getVideoTracks()[0] || null;
+    }
+    r.flipping = false;
+    if (!track) return;
+    if (run !== r) {
+      track.stop();
+      return;
+    }
+    if (oldV) r.stream.removeTrack(oldV);
+    r.stream.addTrack(track);
+    r.video.srcObject = new MediaStream([track]);
+    r.video.play().catch(() => {});
+    const p = r.producers.video;
+    if (p && !p.closed) await p.replaceTrack({ track }).catch(() => {});
+    r.facing = facing;
+    prefs.facing = facing;
+    save('bp.facing', facing);
+    sendFacing(r);
+  }
+
+  function sendFacing(r) {
+    if (r.mode === 'cam' && r.hub?.connected && r.joined) r.hub.request('setFacing', { facing: r.facing }).catch(() => {});
   }
 
   function setStream(stream) {
@@ -272,6 +314,7 @@ export function mountChild(root, cfg, nav) {
       }
       if (g !== r.gen) return;
       r.joined = true;
+      sendFacing(r);
       setStatus(t('connected'), true);
       r.detector?.resend();
     } catch (e) {
@@ -364,6 +407,9 @@ export function mountChild(root, cfg, nav) {
         h('div', null, dot, ' ', h('strong', null, r.name), ' · ', status),
         h('div', { class: 'hint' }, t('noLock')),
         h('div', { class: 'hint' }, t('doubleTap'))),
+      r.mode === 'cam'
+        ? h('button', { type: 'button', class: 'ghost', onclick: () => { flipCamera(); showBar(); } }, t('switchCamera'))
+        : null,
       h('button', { type: 'button', class: 'danger', onclick: () => stop() }, t('stop')));
     const video = h('video', { class: 'probe', muted: true, playsInline: true, autoplay: true });
     video.setAttribute('playsinline', '');
