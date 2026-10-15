@@ -169,10 +169,31 @@ async function serveStatic(req, res, pathname) {
 
 // ---------------------------------------------------------------- handlers
 
+// Icons are harmless and make even the error page recognisable
+const PUBLIC_FILES = new Set(['/icon.svg', '/icon-192.png', '/icon-512.png', '/apple-touch-icon.png', '/favicon.ico']);
+const deniedLogged = new Map(); // ip -> last log time
+
+function forbiddenPage(ip) {
+  const safeIp = String(ip).replace(/[^0-9a-fA-F:.]/g, '');
+  return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">`
+    + `<title>Babyphone</title><link rel="icon" href="/icon.svg" type="image/svg+xml"></head>`
+    + `<body bgcolor="#0f1115" text="#e8eaf0"><center><br><img src="/icon.svg" width="120" height="120" alt="">`
+    + `<h2>Forbidden</h2><p>${safeIp} is not in ALLOWED_CIDRS.</p></center></body></html>`;
+}
+
 function guard(req, res) {
   const ip = clientIp(req);
   if (!ipAllowed(ip)) {
-    send(res, 403, 'Forbidden');
+    const now = Date.now();
+    if (now - (deniedLogged.get(ip) || 0) > 600000) {
+      deniedLogged.set(ip, now);
+      if (deniedLogged.size > 1000) deniedLogged.clear();
+      log(`access: ${ip} denied, not in ALLOWED_CIDRS`);
+    }
+    let pathname = '';
+    try { pathname = new URL(req.url, 'https://x').pathname; } catch { /* ignore */ }
+    if (PUBLIC_FILES.has(pathname) && knownHost(req.headers.host, certs.names())) return ip;
+    send(res, 403, forbiddenPage(ip), { 'Content-Type': 'text/html; charset=utf-8' });
     return null;
   }
   if (!knownHost(req.headers.host, certs.names())) {

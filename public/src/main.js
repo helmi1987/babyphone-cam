@@ -53,6 +53,7 @@ function go(name, arg) {
 
 function renderStart(error) {
   app.replaceChildren(h('section', { class: 'view start' },
+    h('img', { class: 'logo', src: '/icon.svg', alt: '', width: '112', height: '112' }),
     h('h1', { class: 'title' }, t('appTitle')),
     h('p', { class: 'muted' }, t('useAs')),
     h('div', { class: 'roles' },
