@@ -390,3 +390,23 @@ button.small { padding: 0 12px; }
 .grid.fill .vol input[type="range"] { height: 32px; }
 .grid.fill .vol button.small { min-height: 36px; }
 .grid.fill .tile .actions button { min-height: 44px; }
+
+/* Mini tiles: no scrolling with many children; name over the picture,
+   tap to enlarge for volume, threshold, talk and camera switch */
+.grid.mini .tile { position: relative; border-width: 2px; }
+.grid.mini .tile:not(.enlarged) .controls { display: none; }
+.grid.mini .tile:not(.enlarged) .info {
+  position: absolute; left: 0; right: 0; top: 0; z-index: 1;
+  padding: 4px 8px; gap: 4px; flex-wrap: nowrap; overflow: hidden;
+  background: linear-gradient(rgba(0, 0, 0, 0.65), rgba(0, 0, 0, 0));
+  pointer-events: none;
+}
+.grid.mini .tile:not(.enlarged) .name { font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.grid.mini .tile:not(.enlarged) .badge { font-size: 0.7rem; padding: 1px 6px; }
+.grid.mini .tile:not(.enlarged) .state { display: none; }
+.grid.mini .tile:not(.enlarged) .media { cursor: zoom-in; }
+.grid.mini .tile:not(.enlarged) .badge { display: none; }
+.grid.mini .tile:not(.enlarged) .info:has(.badge.mic:not([hidden])) .name::after {
+  content: ""; display: inline-block; width: 8px; height: 8px; margin-left: 6px;
+  border-radius: 50%; background: var(--ok); vertical-align: middle;
+}

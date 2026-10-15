@@ -20,6 +20,7 @@ export function mountParent(root, cfg, nav) {
   let recvT = null;
   let gen = 0;
   let enlarged = null;
+  let fullChrome = 200; // tile height minus picture, measured in layout()
   let talk = null;
   let localAcked = false;
   let destroyed = false;
@@ -161,31 +162,42 @@ export function mountParent(root, cfg, nav) {
 
   // Use the whole screen: pick the column count that gives each picture the
   // largest 16:9 area; fall back to a scrolling grid when tiles get too small.
+  // Use the whole screen without scrolling: pick the column count that gives
+  // each picture the largest 16:9 area. If full controls do not fit, tiles
+  // switch to "mini" (name over the picture, controls in the enlarged view).
   function layout() {
     const n = tiles.size;
-    const gap = 12;
+    const gap = n > 4 ? 8 : 12;
     const W = grid.clientWidth;
     const view = grid.parentElement;
     const padBottom = view ? parseFloat(getComputedStyle(view).paddingBottom) || 0 : 0;
     const H = window.innerHeight - grid.getBoundingClientRect().top - window.scrollY - padBottom;
     const first = tiles.values().next().value;
-    const chrome = first
-      ? first.el.offsetHeight - first.el.querySelector('.media').offsetHeight
-      : 250;
-    let best = null;
-    for (let cols = 1; cols <= Math.max(1, n); cols++) {
-      const rows = Math.ceil(n / cols);
-      const cw = (W - gap * (cols - 1)) / cols;
-      const mh = (H - gap * (rows - 1)) / rows - chrome;
-      if (cw < 300 || mh < 120) continue;
-      const vw = Math.min(cw, (mh * 16) / 9);
-      if (!best || vw > best.vw) best = { cols, rows, vw };
+    if (first && !grid.classList.contains('mini')) {
+      const c = first.el.offsetHeight - first.el.querySelector('.media').offsetHeight;
+      if (c > 0) fullChrome = c;
     }
-    const fill = n > 0 && best !== null;
-    grid.classList.toggle('fill', fill);
-    grid.style.gridTemplateColumns = fill ? `repeat(${best.cols}, minmax(0, 1fr))` : '';
-    grid.style.gridTemplateRows = fill ? `repeat(${best.rows}, minmax(0, 1fr))` : '';
-    grid.style.height = fill ? `${Math.floor(H)}px` : '';
+    const pick = (chrome, minW, minH) => {
+      let best = null;
+      for (let cols = 1; cols <= Math.max(1, n); cols++) {
+        const rows = Math.ceil(n / cols);
+        const cw = (W - gap * (cols - 1)) / cols;
+        const mh = (H - gap * (rows - 1)) / rows - chrome;
+        if (cw < minW || mh < minH) continue;
+        const vw = Math.min(cw, (mh * 16) / 9);
+        if (!best || vw > best.vw) best = { cols, rows, vw };
+      }
+      return best;
+    };
+    let best = pick(fullChrome, 300, 120);
+    const mini = n > 0 && !best;
+    if (mini) best = pick(0, 0, 0) || { cols: 1, rows: n };
+    grid.classList.toggle('fill', n > 0);
+    grid.classList.toggle('mini', mini);
+    grid.style.gap = `${gap}px`;
+    grid.style.gridTemplateColumns = n ? `repeat(${best.cols}, minmax(0, 1fr))` : '';
+    grid.style.gridTemplateRows = n ? `repeat(${best.rows}, minmax(0, 1fr))` : '';
+    grid.style.height = n ? `${Math.max(0, Math.floor(H))}px` : '';
   }
   const onResize = () => layout();
   window.addEventListener('resize', onResize);
