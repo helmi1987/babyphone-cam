@@ -2,7 +2,7 @@
 # Copyright (C) 2026 Stefan Diethelm
 # Built by .github/workflows/image.yml and pushed to ghcr.io; compose only pulls it.
 
-FROM node:22-bookworm-slim AS build
+FROM node:25-bookworm-slim AS build
 # Toolchain only needed if mediasoup has no prebuilt worker for this platform
 RUN apt-get update \
  && apt-get install -y --no-install-recommends python3 python3-pip make g++ ca-certificates \
@@ -14,7 +14,7 @@ COPY server/ server/
 COPY public/ public/
 RUN npm run build && npm prune --omit=dev && rm -rf public/src
 
-FROM node:22-bookworm-slim
+FROM node:25-bookworm-slim
 # Debian security updates on every build (weekly scheduled rebuild)
 RUN apt-get update && apt-get upgrade -y --no-install-recommends && rm -rf /var/lib/apt/lists/*
 ENV NODE_ENV=production DATA_DIR=/data CERTS_DIR=/certs
