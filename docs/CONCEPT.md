@@ -48,7 +48,7 @@ public/src/*.js      browser sources -> esbuild -> public/app.js
 | `CERTWARDEN_ENDPOINT_URL` | empty | Cert Warden address; any form (`https://host:4050`, `…/certwarden/app/`, `…/certwarden/api/v1/download`) |
 | `CERT_NAME`, `CERT_CERT_API`, `CERT_KEY_API` | empty | Certificate name in Cert Warden, API key of cert, API key of private key |
 | `CERT_CHECK_DAY` | `30` | Refetch when fewer days left; checked at start and every 6 h |
-| `HEARTBEAT_TIMEOUT` | `20` | s without heartbeat = device offline |
+| `HEARTBEAT_TIMEOUT` | `20` | s without heartbeat = device offline (min 15; clients beat every 5 s) |
 | `ALARM_DELAY` | `30` | s offline before alarm / webhook |
 | `OFFLINE_TIMEOUT` | `600` | s offline before a child disappears from the list |
 | `ALARM_UNACKED_DELAY` | `60` | s an alarm stays unacknowledged before webhook `alarm_unacked` |

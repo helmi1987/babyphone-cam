@@ -237,6 +237,7 @@ export class Hub {
       this.clearChildTimers(rec);
       if (this.children.get(rec.deviceId) === rec && !rec.online) {
         this.children.delete(rec.deviceId);
+        this.clearAlarmsOf(rec.deviceId, 'removed');
         log(`child ${JSON.stringify(rec.name)} (${rec.deviceId}) removed after offline timeout`);
         this.broadcastDevices();
       }
@@ -321,8 +322,8 @@ export class Hub {
     this.toParents({ t: 'alarmCleared', alarmId: alarm.alarmId });
   }
 
-  clearAlarmsOf(deviceId) {
-    for (const a of [...this.alarms.values()]) if (a.deviceId === deviceId) this.clearAlarm(a, 'child back');
+  clearAlarmsOf(deviceId, why = 'child back') {
+    for (const a of [...this.alarms.values()]) if (a.deviceId === deviceId) this.clearAlarm(a, why);
   }
 
   ackAlarm(conn, m) {

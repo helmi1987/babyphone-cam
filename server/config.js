@@ -109,7 +109,7 @@ export const config = Object.freeze({
   certCertApi: str('CERT_CERT_API'),
   certKeyApi: str('CERT_KEY_API'),
   certCheckDays: int('CERT_CHECK_DAY', 30, 1, 3650),
-  heartbeatTimeout: int('HEARTBEAT_TIMEOUT', 20, 5, 3600),
+  heartbeatTimeout: int('HEARTBEAT_TIMEOUT', 20, 15, 3600),
   alarmDelay: int('ALARM_DELAY', 30, 0, 86400),
   offlineTimeout: int('OFFLINE_TIMEOUT', 600, 1, 7 * 86400),
   alarmUnackedDelay: int('ALARM_UNACKED_DELAY', 60, 0, 86400),

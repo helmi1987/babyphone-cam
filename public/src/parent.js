@@ -92,6 +92,9 @@ export function mountParent(root, cfg, nav) {
 
   async function session() {
     const g = ++gen;
+    // Server resends open alarms on join; drop ones cleared while disconnected
+    alarms.clear();
+    renderAlarms();
     resetMedia();
     updateDot();
     try {
