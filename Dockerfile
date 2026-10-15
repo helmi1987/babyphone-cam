@@ -15,6 +15,8 @@ COPY public/ public/
 RUN npm run build && npm prune --omit=dev && rm -rf public/src
 
 FROM node:22-bookworm-slim
+# Debian security updates on every build (weekly scheduled rebuild)
+RUN apt-get update && apt-get upgrade -y --no-install-recommends && rm -rf /var/lib/apt/lists/*
 ENV NODE_ENV=production DATA_DIR=/data CERTS_DIR=/certs
 WORKDIR /app
 COPY --from=build /app/node_modules/ node_modules/

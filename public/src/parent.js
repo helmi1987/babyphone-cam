@@ -21,6 +21,11 @@ export function mountParent(root, cfg, nav) {
   let gen = 0;
   let enlarged = null;
   let fullChrome = 200; // tile height minus picture, measured in layout()
+  const FOCUS_HOLD = 5000;
+  const FOCUS_MAX = 4;
+  const focusSince = new Map(); // deviceId -> time sound started
+  const focusUntil = new Map(); // deviceId -> keep in focus until
+  let focusTimer = null;
   let talk = null;
   let localAcked = false;
   let destroyed = false;
@@ -36,11 +41,26 @@ export function mountParent(root, cfg, nav) {
   const toast = h('p', { class: 'error', role: 'status' });
   const empty = h('p', { class: 'empty' }, t('noChildren'));
   const grid = h('div', { class: 'grid' });
+  // Auto focus: children with sound take over the screen (newest 4, ~5 s after)
+  let autoFocus = load('bp.autoFocus', false) === true;
+  const focusBtn = h('button', {
+    type: 'button',
+    class: 'ghost small',
+    'aria-pressed': String(autoFocus),
+    onclick: () => {
+      autoFocus = !autoFocus;
+      save('bp.autoFocus', autoFocus);
+      updateFocus();
+    },
+  }, `${t('autoFocus')}: ${autoFocus ? t('on') : t('off')}`);
+  focusBtn.classList.toggle('selected', autoFocus);
 
   root.replaceChildren(h('section', { class: 'view parent' },
     h('header', { class: 'bar' },
       h('h1', null, dot, ' ', t('roleParent')),
-      h('button', { type: 'button', class: 'ghost', onclick: () => logout() }, t('logout'))),
+      h('div', { class: 'bar-actions' },
+        focusBtn,
+        h('button', { type: 'button', class: 'ghost', onclick: () => logout() }, t('logout')))),
     soundHint,
     toast,
     empty,
@@ -157,7 +177,7 @@ export function mountParent(root, cfg, nav) {
       if (!seen.has(id)) removeTile(tile);
     }
     empty.hidden = tiles.size > 0;
-    layout();
+    updateFocus();
   }
 
   // Use the whole screen: pick the column count that gives each picture the
@@ -166,13 +186,14 @@ export function mountParent(root, cfg, nav) {
   // each picture the largest 16:9 area. If full controls do not fit, tiles
   // switch to "mini" (name over the picture, controls in the enlarged view).
   function layout() {
-    const n = tiles.size;
+    const shown = [...tiles.values()].filter((tl) => !tl.el.classList.contains('unfocused'));
+    const n = shown.length;
     const gap = n > 4 ? 8 : 12;
     const W = grid.clientWidth;
     const view = grid.parentElement;
     const padBottom = view ? parseFloat(getComputedStyle(view).paddingBottom) || 0 : 0;
     const H = window.innerHeight - grid.getBoundingClientRect().top - window.scrollY - padBottom;
-    const first = tiles.values().next().value;
+    const first = shown[0];
     if (first && !grid.classList.contains('mini')) {
       const c = first.el.offsetHeight - first.el.querySelector('.media').offsetHeight;
       if (c > 0) fullChrome = c;
@@ -199,6 +220,36 @@ export function mountParent(root, cfg, nav) {
     grid.style.gridTemplateRows = n ? `repeat(${best.rows}, minmax(0, 1fr))` : '';
     grid.style.height = n ? `${Math.max(0, Math.floor(H))}px` : '';
   }
+  function updateFocus() {
+    const now = Date.now();
+    for (const [id, tile] of tiles) {
+      const d = tile.data || {};
+      if (d.online && d.sound) {
+        if (!(focusUntil.get(id) > now)) focusSince.set(id, now);
+        focusUntil.set(id, now + FOCUS_HOLD);
+      }
+    }
+    for (const id of [...focusUntil.keys()]) {
+      if (!tiles.has(id) || focusUntil.get(id) <= now) {
+        focusUntil.delete(id);
+        focusSince.delete(id);
+      }
+    }
+    // A picture enlarged by hand is never replaced
+    const ids = autoFocus && !enlarged
+      ? [...focusUntil.keys()].sort((a, b) => focusSince.get(b) - focusSince.get(a)).slice(0, FOCUS_MAX)
+      : [];
+    const focus = new Set(ids);
+    for (const [id, tile] of tiles) tile.el.classList.toggle('unfocused', focus.size > 0 && !focus.has(id));
+    grid.classList.toggle('focus', focus.size > 0);
+    focusBtn.textContent = `${t('autoFocus')}: ${autoFocus ? t('on') : t('off')}`;
+    focusBtn.setAttribute('aria-pressed', String(autoFocus));
+    focusBtn.classList.toggle('selected', autoFocus);
+    clearTimeout(focusTimer);
+    if (focus.size) focusTimer = setTimeout(updateFocus, 1000);
+    layout();
+  }
+
   const onResize = () => layout();
   window.addEventListener('resize', onResize);
 
@@ -458,6 +509,7 @@ export function mountParent(root, cfg, nav) {
       setVideoLayer(prev, 0);
       enlarged = null;
       document.body.classList.remove('has-enlarged');
+      updateFocus();
     }
     if (prev !== tile) {
       enlarged = tile;
@@ -601,6 +653,7 @@ export function mountParent(root, cfg, nav) {
     for (const tile of [...tiles.values()]) removeTile(tile);
     tone.set(false);
     clearInterval(clockTimer);
+    clearTimeout(focusTimer);
     document.removeEventListener('keydown', onKey);
     window.removeEventListener('resize', onResize);
     ctx?.removeEventListener('statechange', updateSoundHint);
