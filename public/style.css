@@ -375,3 +375,18 @@ button.small { padding: 0 12px; }
 .thr-title { font-size: 0.85rem; color: var(--muted); }
 .tile .level { overflow: visible; }
 .thr-mark { position: absolute; top: -6px; bottom: 0; width: 2px; margin-left: -1px; background: #ffd46b; }
+
+/* Parent grid filling the screen (layout() in parent.js sets columns/rows) */
+.view.parent { max-width: none; }
+.grid.fill .tile { min-height: 0; }
+.grid.fill .tile .media { flex: 1 1 0; min-height: 0; aspect-ratio: auto; }
+.grid.fill .tile video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+.grid.fill .tile .info, .grid.fill .tile .controls { flex: none; }
+
+/* Compact tile chrome when the grid fills the screen */
+.grid.fill .tile .info { padding: 6px 10px 0; }
+.grid.fill .tile .state { width: auto; }
+.grid.fill .tile .controls { padding: 6px 10px 10px; gap: 4px; }
+.grid.fill .vol input[type="range"] { height: 32px; }
+.grid.fill .vol button.small { min-height: 36px; }
+.grid.fill .tile .actions button { min-height: 44px; }

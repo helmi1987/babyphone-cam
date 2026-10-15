@@ -156,7 +156,39 @@ export function mountParent(root, cfg, nav) {
       if (!seen.has(id)) removeTile(tile);
     }
     empty.hidden = tiles.size > 0;
+    layout();
   }
+
+  // Use the whole screen: pick the column count that gives each picture the
+  // largest 16:9 area; fall back to a scrolling grid when tiles get too small.
+  function layout() {
+    const n = tiles.size;
+    const gap = 12;
+    const W = grid.clientWidth;
+    const view = grid.parentElement;
+    const padBottom = view ? parseFloat(getComputedStyle(view).paddingBottom) || 0 : 0;
+    const H = window.innerHeight - grid.getBoundingClientRect().top - window.scrollY - padBottom;
+    const first = tiles.values().next().value;
+    const chrome = first
+      ? first.el.offsetHeight - first.el.querySelector('.media').offsetHeight
+      : 250;
+    let best = null;
+    for (let cols = 1; cols <= Math.max(1, n); cols++) {
+      const rows = Math.ceil(n / cols);
+      const cw = (W - gap * (cols - 1)) / cols;
+      const mh = (H - gap * (rows - 1)) / rows - chrome;
+      if (cw < 300 || mh < 120) continue;
+      const vw = Math.min(cw, (mh * 16) / 9);
+      if (!best || vw > best.vw) best = { cols, rows, vw };
+    }
+    const fill = n > 0 && best !== null;
+    grid.classList.toggle('fill', fill);
+    grid.style.gridTemplateColumns = fill ? `repeat(${best.cols}, minmax(0, 1fr))` : '';
+    grid.style.gridTemplateRows = fill ? `repeat(${best.rows}, minmax(0, 1fr))` : '';
+    grid.style.height = fill ? `${Math.floor(H)}px` : '';
+  }
+  const onResize = () => layout();
+  window.addEventListener('resize', onResize);
 
   function wantedProducers(tile) {
     const d = tile.data;
@@ -558,6 +590,7 @@ export function mountParent(root, cfg, nav) {
     tone.set(false);
     clearInterval(clockTimer);
     document.removeEventListener('keydown', onKey);
+    window.removeEventListener('resize', onResize);
     ctx?.removeEventListener('statechange', updateSoundHint);
     banners.remove();
     document.body.classList.remove('has-enlarged');
