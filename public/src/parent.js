@@ -302,6 +302,24 @@ export function mountParent(root, cfg, nav) {
     });
     tile.talkBtn = h('button', { type: 'button', class: 'talk' }, t('talk'));
     bindTalk(tile);
+    tile.thrLabel = h('span', { class: 'vol-label' });
+    tile.thrMark = h('span', { class: 'thr-mark' });
+    tile.thrSlider = h('input', {
+      type: 'range',
+      min: '0',
+      max: '100',
+      step: '1',
+      'aria-label': t('threshold'),
+      oninput: () => {
+        const v = Number(tile.thrSlider.value);
+        tile.thrEditUntil = Date.now() + 1500;
+        showThreshold(tile, v);
+        clearTimeout(tile.thrTimer);
+        tile.thrTimer = setTimeout(() => {
+          if (hub.connected) hub.request('setThreshold', { deviceId: id, sound: v }).catch(() => {});
+        }, 300);
+      },
+    });
     tile.flipBtn = h('button', {
       type: 'button',
       class: 'small flip',
@@ -320,13 +338,14 @@ export function mountParent(root, cfg, nav) {
     }, '×');
     const controls = h('div', { class: 'controls' },
       h('div', { class: 'vol' }, slider, tile.volLabel, tile.muteBtn),
+      h('div', { class: 'vol thr' }, h('span', { class: 'thr-title' }, t('threshold')), tile.thrSlider, tile.thrLabel),
       h('div', { class: 'actions' }, tile.talkBtn, tile.flipBtn));
     for (const ev of ['click', 'pointerdown', 'pointerup']) controls.addEventListener(ev, (e) => e.stopPropagation());
 
     tile.el = h('article', { class: 'tile', tabIndex: 0 },
       h('div', { class: 'media', onclick: () => toggleEnlarge(tile) },
         tile.video, tile.placeholder, closeBtn,
-        h('div', { class: 'level' }, tile.levelEl)),
+        h('div', { class: 'level' }, tile.levelEl, tile.thrMark)),
       h('div', { class: 'info', onclick: () => toggleEnlarge(tile) },
         tile.nameEl, tile.modeEl, tile.micEl, tile.stateEl),
       controls,
@@ -339,6 +358,11 @@ export function mountParent(root, cfg, nav) {
     });
     applyGain(tile);
     return tile;
+  }
+
+  function showThreshold(tile, v) {
+    tile.thrLabel.textContent = String(v);
+    tile.thrMark.style.left = `${v}%`;
   }
 
   function updateTile(tile) {
@@ -361,6 +385,10 @@ export function mountParent(root, cfg, nav) {
     tile.el.classList.toggle('phone', d.mode === 'phone');
     tile.levelEl.style.width = `${online ? Math.max(0, Math.min(100, Number(d.level) || 0)) : 0}%`;
     tile.talkBtn.disabled = !online || !mediaAvailable();
+    if (!(tile.thrEditUntil > Date.now()) && Number.isFinite(d.soundThreshold)) {
+      tile.thrSlider.value = String(d.soundThreshold);
+      showThreshold(tile, d.soundThreshold);
+    }
     tile.flipBtn.hidden = d.mode !== 'cam';
     tile.flipBtn.disabled = !online;
     if (!online && talk?.deviceId === tile.id) stopTalk();

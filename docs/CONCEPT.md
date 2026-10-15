@@ -52,7 +52,7 @@ public/src/*.js      browser sources -> esbuild -> public/app.js
 | `ALARM_DELAY` | `30` | s offline before alarm / webhook |
 | `OFFLINE_TIMEOUT` | `600` | s offline before a child disappears from the list |
 | `ALARM_UNACKED_DELAY` | `60` | s an alarm stays unacknowledged before webhook `alarm_unacked` |
-| `SOUND_THRESHOLD` | `25` | 0–100, sound level that counts as activity |
+| `SOUND_THRESHOLD` | `25` | 0–100, default sound level that counts as activity; parents can change it per child |
 | `MOTION_THRESHOLD` | `4` | % of changed pixels that counts as motion |
 | `WEBHOOK_<n>_URL` | empty | n = 1..5 |
 | `WEBHOOK_<n>_METHOD` | `POST` | GET, POST, PUT |
@@ -111,18 +111,20 @@ Client -> server (requests):
 | `ackAlarm` | parent only: `alarmId` | – |
 | `setFacing` | child only: `facing:"user"\|"environment"` | – |
 | `switchCamera` | parent only: `deviceId` (cam child) | – |
+| `setThreshold` | parent only: `deviceId, sound:0..100` (stored in `DATA_DIR/thresholds.json`) | – |
 | `leave` | – | – (child: removed at once, no alarm) |
 
 Server -> client (push):
 
 | t | To | Fields |
 |---|---|---|
-| `devices` | parents | `list:[{deviceId, name, mode, facing, online, since, lastSeen, producers:[{id, kind, source}], sound, motion, level}]` (on every change; `level` throttled to 2/s) |
+| `devices` | parents | `list:[{deviceId, name, mode, facing, soundThreshold, online, since, lastSeen, producers:[{id, kind, source}], sound, motion, level}]` (on every change; `level` throttled to 2/s) |
 | `alarm` | parents | `{alarmId, deviceId, name, reason:"child_offline", since}` |
 | `alarmCleared` | parents | `{alarmId}` (acked by any parent, or child back online) |
 | `talk` | one child | `{producerId}` consume and play |
 | `talkEnd` | one child | `{producerId}` |
 | `switchCamera` | one child | – (flip front/rear, then `setFacing`) |
+| `threshold` | one child | `{sound}` new sound threshold (also in `join` reply) |
 
 Media:
 - Child cam: video (simulcast 2 layers: `scaleResolutionDownBy:4,

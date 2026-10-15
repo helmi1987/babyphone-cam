@@ -185,6 +185,7 @@ export function mountChild(root, cfg, nav) {
         r.hub.on('talk', (m) => onTalk(r, m.producerId));
         r.hub.on('talkEnd', (m) => endTalk(r, m.producerId));
         r.hub.on('switchCamera', () => flipCamera());
+        r.hub.on('threshold', (m) => setThreshold(r, m.sound));
         r.hub.start();
         showBar();
       })
@@ -240,6 +241,11 @@ export function mountChild(root, cfg, nav) {
     sendFacing(r);
   }
 
+  function setThreshold(r, v) {
+    r.soundThreshold = Number(v);
+    r.detector?.setSoundThreshold(r.soundThreshold);
+  }
+
   function sendFacing(r) {
     if (r.mode === 'cam' && r.hub?.connected && r.joined) r.hub.request('setFacing', { facing: r.facing }).catch(() => {});
   }
@@ -256,7 +262,7 @@ export function mountChild(root, cfg, nav) {
       stream,
       audioCtx: r.audioCtx,
       video: r.video,
-      soundThreshold: cfg.soundThreshold ?? 25,
+      soundThreshold: r.soundThreshold ?? cfg.soundThreshold ?? 25,
       motionThreshold: cfg.motionThreshold ?? 4,
       send: (a) => {
         if (r.hub?.connected && r.joined) r.hub.request('activity', a).catch(() => {});
@@ -285,7 +291,8 @@ export function mountChild(root, cfg, nav) {
     setStatus(t('connecting'), false);
     try {
       await refreshStream();
-      const { rtpCapabilities } = await r.hub.request('join', { deviceId: myId, name: r.name, mode: r.mode });
+      const { rtpCapabilities, soundThreshold } = await r.hub.request('join', { deviceId: myId, name: r.name, mode: r.mode });
+      if (Number.isFinite(soundThreshold)) setThreshold(r, soundThreshold);
       if (g !== r.gen) return;
       await r.media.load(rtpCapabilities);
       const tr = await r.media.createTransport('send');

@@ -97,6 +97,9 @@ export function startDetector({ stream, audioCtx, video, soundThreshold = 25, mo
 
   return {
     resend: emit,
+    setSoundThreshold(v) {
+      soundThreshold = v;
+    },
     stop() {
       timers.forEach(clearInterval);
       try {

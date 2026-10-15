@@ -4,6 +4,8 @@
 // WebSocket hub: devices, presence, activity, alarms, mediasoup signalling.
 
 import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
 import { config, log } from './config.js';
 import { sendWebhook } from './webhooks.js';
 
@@ -32,6 +34,8 @@ export class Hub {
     this.parents = new Map(); // deviceId -> parent record
     this.producers = new Map(); // producerId -> {producer, conn}
     this.alarms = new Map(); // alarmId -> alarm
+    this.thresholdFile = path.join(config.dataDir, 'thresholds.json');
+    this.thresholds = loadThresholds(this.thresholdFile); // deviceId -> sound threshold
     this.lastDevicesAt = 0;
     this.devicesTimer = null;
     this.noParentSince = null;
@@ -112,6 +116,7 @@ export class Hub {
       case 'activity': return this.activity(conn, m);
       case 'setFacing': return this.setFacing(conn, m);
       case 'switchCamera': return this.switchCamera(conn, m);
+      case 'setThreshold': return this.setThreshold(conn, m);
       case 'ackAlarm': return this.ackAlarm(conn, m);
       case 'leave': return this.leave(conn);
       default: fail('unknown request');
@@ -178,7 +183,7 @@ export class Hub {
         for (const a of this.alarms.values()) this.send(conn, { t: 'alarm', ...this.alarmPayload(a) });
       });
     }
-    return { rtpCapabilities: this.media.rtpCapabilities };
+    return { rtpCapabilities: this.media.rtpCapabilities, soundThreshold: this.soundThresholdOf(deviceId) };
   }
 
   // Same deviceId joined again from another socket: drop the old one silently.
@@ -343,6 +348,7 @@ export class Hub {
       name: c.name,
       mode: c.mode,
       facing: c.facing || null,
+      soundThreshold: this.soundThresholdOf(c.deviceId),
       online: c.online,
       since: c.since,
       lastSeen: c.lastSeen,
@@ -395,6 +401,31 @@ export class Hub {
       rec.facing = m.facing;
       this.broadcastDevices();
     }
+    return null;
+  }
+
+  soundThresholdOf(deviceId) {
+    return this.thresholds[deviceId] ?? config.soundThreshold;
+  }
+
+  // Parent sets the sound threshold of one child; kept in DATA_DIR across restarts
+  setThreshold(conn, m) {
+    if (conn.role !== 'parent') fail('parent only');
+    const deviceId = String(m.deviceId ?? '');
+    const child = this.children.get(deviceId);
+    if (!child) fail('unknown child');
+    const sound = Math.max(0, Math.min(100, Math.round(Number(m.sound))));
+    if (!Number.isFinite(sound)) fail('invalid threshold');
+    if (this.thresholds[deviceId] === sound) return null;
+    this.thresholds[deviceId] = sound;
+    try {
+      fs.writeFileSync(this.thresholdFile, JSON.stringify(this.thresholds));
+    } catch (e) {
+      log(`thresholds: cannot store (${e.code || e.message})`);
+    }
+    if (child.conn) this.send(child.conn, { t: 'threshold', sound });
+    log(`threshold of ${JSON.stringify(child.name)} set to ${sound}`);
+    this.broadcastDevices();
     return null;
   }
 
@@ -561,5 +592,16 @@ export class Hub {
         conn.ws.close(1001, 'shutdown');
       } catch { /* ignore */ }
     }
+  }
+}
+
+function loadThresholds(file) {
+  try {
+    const data = JSON.parse(fs.readFileSync(file, 'utf8'));
+    const out = {};
+    for (const [k, v] of Object.entries(data)) if (Number.isInteger(v) && v >= 0 && v <= 100) out[k] = v;
+    return out;
+  } catch {
+    return {};
   }
 }
