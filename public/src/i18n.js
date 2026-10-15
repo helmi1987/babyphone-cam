@@ -1,0 +1,131 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Stefan Diethelm
+
+const strings = {
+  de: {
+    appTitle: 'Babyphone',
+    useAs: 'Dieses Gerät verwenden als',
+    roleChild: 'Kind',
+    roleParent: 'Eltern',
+    pinChild: 'PIN Kind',
+    pinParent: 'PIN Eltern',
+    pinWrong: 'Falscher PIN',
+    pinLocked: 'Zu viele Versuche. Bitte in einigen Minuten erneut versuchen.',
+    pinError: 'Anmeldung fehlgeschlagen',
+    back: 'Zurück',
+    ok: 'OK',
+    del: 'Löschen',
+    logout: 'Abmelden',
+    close: 'Schliessen',
+    serverError: 'Server nicht erreichbar',
+    insecure: 'Kamera und Mikrofon sind nur über HTTPS verfügbar. Seite mit https:// öffnen.',
+    noMedia: 'Dieser Browser erlaubt keinen Zugriff auf Kamera und Mikrofon.',
+    childName: 'Name',
+    namePlaceholder: 'Name eingeben',
+    mode: 'Modus',
+    modeCam: 'Kamera',
+    modePhone: 'Telefon',
+    modeCamHint: 'Video und Ton',
+    modePhoneHint: 'Nur Ton',
+    camera: 'Kamera',
+    front: 'Vorne',
+    rear: 'Hinten',
+    start: 'Starten',
+    nameRequired: 'Bitte einen Namen wählen oder eingeben.',
+    mediaDenied: 'Kein Zugriff auf Kamera/Mikrofon: {msg}',
+    unsupported: 'Dieser Browser unterstützt WebRTC nicht: {msg}',
+    stop: 'Beenden',
+    noLock: 'Bildschirm nicht sperren',
+    doubleTap: 'Doppeltippen zeigt dieses Menü',
+    connected: 'Verbunden',
+    connecting: 'Verbinde …',
+    online: 'online',
+    offline: 'offline',
+    offlineSince: 'offline seit {min} min',
+    micActive: 'Mikro aktiv',
+    audioOnly: 'Nur Ton',
+    volume: 'Lautstärke',
+    mute: 'Stumm',
+    unmute: 'Ton an',
+    talk: 'Sprechen',
+    talking: 'Spricht …',
+    talkFailed: 'Sprechen nicht möglich: {msg}',
+    noChildren: 'Noch kein Kind-Gerät verbunden.',
+    alarmOffline: '{name} ist offline (seit {time})',
+    ack: 'Bestätigen',
+    connLost: 'Keine Verbindung zum Server',
+    tapForSound: 'Tippen, um den Ton zu aktivieren',
+  },
+  en: {
+    appTitle: 'Baby monitor',
+    useAs: 'Use this device as',
+    roleChild: 'Child',
+    roleParent: 'Parents',
+    pinChild: 'Child PIN',
+    pinParent: 'Parent PIN',
+    pinWrong: 'Wrong PIN',
+    pinLocked: 'Too many attempts. Please try again in a few minutes.',
+    pinError: 'Login failed',
+    back: 'Back',
+    ok: 'OK',
+    del: 'Delete',
+    logout: 'Log out',
+    close: 'Close',
+    serverError: 'Server not reachable',
+    insecure: 'Camera and microphone only work over HTTPS. Open the page with https://.',
+    noMedia: 'This browser does not allow access to camera and microphone.',
+    childName: 'Name',
+    namePlaceholder: 'Enter name',
+    mode: 'Mode',
+    modeCam: 'Camera',
+    modePhone: 'Phone',
+    modeCamHint: 'Video and sound',
+    modePhoneHint: 'Sound only',
+    camera: 'Camera',
+    front: 'Front',
+    rear: 'Back',
+    start: 'Start',
+    nameRequired: 'Please pick or enter a name.',
+    mediaDenied: 'No access to camera/microphone: {msg}',
+    unsupported: 'This browser does not support WebRTC: {msg}',
+    stop: 'Stop',
+    noLock: 'Do not lock the screen',
+    doubleTap: 'Double tap shows this menu',
+    connected: 'Connected',
+    connecting: 'Connecting …',
+    online: 'online',
+    offline: 'offline',
+    offlineSince: 'offline for {min} min',
+    micActive: 'Mic active',
+    audioOnly: 'Sound only',
+    volume: 'Volume',
+    mute: 'Mute',
+    unmute: 'Unmute',
+    talk: 'Talk',
+    talking: 'Talking …',
+    talkFailed: 'Talking not possible: {msg}',
+    noChildren: 'No child device connected yet.',
+    alarmOffline: '{name} is offline (since {time})',
+    ack: 'Acknowledge',
+    connLost: 'No connection to the server',
+    tapForSound: 'Tap to enable sound',
+  },
+};
+
+// German is the default; English only when the browser prefers it.
+export const lang = (navigator.language || 'de').toLowerCase().startsWith('en') ? 'en' : 'de';
+document.documentElement.lang = lang;
+
+export function t(key, vars) {
+  let s = strings[lang][key] ?? strings.de[key] ?? key;
+  if (vars) s = s.replace(/\{(\w+)\}/g, (m, k) => (k in vars ? String(vars[k]) : m));
+  return s;
+}
+
+export function clock(ts) {
+  try {
+    return new Date(ts).toLocaleTimeString(lang, { hour: '2-digit', minute: '2-digit' });
+  } catch {
+    return '';
+  }
+}
