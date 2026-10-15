@@ -28,8 +28,9 @@ function fail(message) {
 }
 
 function str(name, def = '') {
-  const v = env[name];
-  return v === undefined ? def : String(v).trim();
+  // Empty counts as unset: compose passes `NAME=` for values left empty in .env
+  const v = env[name] === undefined ? '' : String(env[name]).trim();
+  return v === '' ? def : v;
 }
 
 function int(name, def, min, max) {

@@ -274,6 +274,7 @@ async function main() {
     server.listen(config.httpsPort, () => resolve());
   });
   log(`https: listening on ${config.httpsPort}`);
+  log(`access: allowed networks ${config.allowedCidrs.join(', ')}`);
 
   let redirect = null;
   if (config.httpPort > 0) {
