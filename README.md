@@ -113,8 +113,9 @@ Over WireGuard the VPN subnet must be routed to the LAN.
   (install dialog in Chrome/Edge/Android, step hint on iPhone/iPad); hidden when
   already running as an app.
 - Parent unit: the page keeps the screen on (Wake Lock) while it is open.
-  Locking the device or switching apps still stops listening; use webhooks for
-  alerts when no parent page is open.
+  iPhone (Home Screen app, user test): sound keeps playing with the screen
+  locked; the audio indicator shows the app icon. Other platforms not tested;
+  use webhooks for alerts when no parent page is open.
 - LCD screens keep their backlight; only OLED goes truly dark.
 
 ## Licence
