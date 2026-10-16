@@ -221,3 +221,18 @@ details p { padding: 0 18px 16px; margin: 0; color: var(--muted); }
 .picker ul { list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
 .picker a { color: #fff; }
 .picker .btn-ghost { min-width: 130px; }
+
+/* ---------- donate ---------- */
+.wishlist { list-style: none; padding: 0; margin: 0; display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr)); }
+.wish { display: flex; flex-direction: column; height: 100%; color: var(--text); text-decoration: none; transition: transform .15s ease; }
+.wish:hover, .wish:focus-visible { transform: translateY(-4px) rotate(-1deg); }
+.wish h3 { margin: 0 0 4px; }
+.wish p { flex: 1; }
+.wish-ico { font-size: 2.4rem; line-height: 1; margin-bottom: 12px; }
+.wish:hover .wish-ico { animation: wiggle .5s ease; }
+.wish-chf { align-self: flex-start; margin-top: 14px; padding: 4px 12px; border-radius: 999px; font-weight: 700; background: var(--green-soft); color: var(--green); }
+.donate-cta { margin: 28px 0 8px; }
+.btn-donate { background: var(--moon); color: #2a1f00; }
+.btn-donate:hover { background: #ffe08f; }
+@keyframes wiggle { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(-12deg); } 75% { transform: rotate(12deg); } }
+@media (prefers-reduced-motion: reduce) { .wish { transition: none; } .wish:hover, .wish:focus-visible { transform: none; } .wish:hover .wish-ico { animation: none; } }

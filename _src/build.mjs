@@ -14,6 +14,7 @@ const SRC = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(SRC, '..');
 const SITE = 'https://babyphone.helminet.ch';
 const REPO = 'https://github.com/helmi1987/babyphone-cam';
+const PAYPAL = 'https://paypal.me/helmi1987';
 const LANGS = ['de', 'en', 'it', 'fr'];
 const T = JSON.parse(fs.readFileSync(path.join(SRC, 'i18n.json'), 'utf8'));
 
@@ -136,7 +137,7 @@ function page(lang) {
   const alternates = LANGS.map((l) => `  <link rel="alternate" hreflang="${l}" href="${SITE}/${l}/">`).join('\n')
     + `\n  <link rel="alternate" hreflang="x-default" href="${SITE}/en/">`;
   const switcher = LANGS.map((l) => `<li><a href="../${l}/" hreflang="${l}" lang="${l}"${l === lang ? ' aria-current="page"' : ''}>${l.toUpperCase()}<span class="sr-only"> – ${esc(T[l].name)}</span></a></li>`).join('');
-  const navItems = ['features', 'how', 'screens', 'privacy', 'install', 'faq']
+  const navItems = ['features', 'how', 'screens', 'privacy', 'install', 'faq', 'donate']
     .map((k) => `<li><a href="#${k}">${esc(t.nav[k])}</a></li>`).join('');
   const heroShot = `../assets/img/shots/parent-${t.shots}.webp`;
   const wideShots = t.shotsList.filter((s) => !PHONE.has(s.img));
@@ -196,6 +197,7 @@ ${LANGS.filter((l) => l !== lang).map((l) => `  <meta property="og:locale:altern
           <p class="cta">
             <a class="btn btn-primary" href="#install">${esc(t.ctaInstall)}</a>
             <a class="btn btn-ghost" href="${REPO}" rel="noopener">${esc(t.ctaGithub)}</a>
+            <a class="btn btn-ghost" href="#donate">🧸 ${esc(t.nav.donate)}</a>
           </p>
           <ul class="badges">${t.badges.map((b) => `<li>${esc(b)}</li>`).join('')}</ul>
         </div>
@@ -276,11 +278,23 @@ ${esc(COMPOSE)}</code></pre>
 ${t.faq.map((f) => `        <details><summary>${esc(f.q)}</summary><p>${esc(f.a)}</p></details>`).join('\n')}
       </div>
     </section>
+
+    <section id="donate" class="section" aria-labelledby="donate-title">
+      <div class="wrap">
+        <h2 id="donate-title">${esc(t.donate.title)}</h2>
+        <p class="lead">${esc(t.donate.lead)}</p>
+        <ul class="wishlist">
+${t.donate.items.map((w) => `          <li><a class="card wish" href="${PAYPAL}${w.chf ? `/${w.chf}CHF` : ''}" rel="noopener"><span class="wish-ico" aria-hidden="true">${w.icon}</span><h3>${esc(w.t)}</h3><p>${esc(w.d)}</p><span class="wish-chf">${w.chf ? `CHF ${w.chf}` : esc(t.donate.free)}</span></a></li>`).join('\n')}
+        </ul>
+        <p class="donate-cta"><a class="btn btn-donate" href="${PAYPAL}" rel="noopener">${esc(t.donate.btn)}</a></p>
+        <p class="note">${esc(t.donate.note)}</p>
+      </div>
+    </section>
   </main>
 
   <footer class="site-footer">
     <div class="wrap footer-row">
-      <p><img src="../assets/img/icon.svg" width="24" height="24" alt=""> © 2026 Stefan Diethelm · <a href="${REPO}/blob/main/LICENSE" rel="noopener">${esc(t.footerLicense)}</a> · <a href="${REPO}" rel="noopener">${esc(t.footerSource)}</a></p>
+      <p><img src="../assets/img/icon.svg" width="24" height="24" alt=""> © 2026 Stefan Diethelm · <a href="${REPO}/blob/main/LICENSE" rel="noopener">${esc(t.footerLicense)}</a> · <a href="${REPO}" rel="noopener">${esc(t.footerSource)}</a> · <a href="#donate">${esc(t.nav.donate)}</a></p>
       <!-- IMPRESSUM PLACEHOLDER: add a link to the legal notice / Impressum page here once it exists. No personal data is invented on this site. -->
       <p class="muted">${esc(t.footerNote)}</p>
       <p><a href="#main">${esc(t.top)} ↑</a></p>

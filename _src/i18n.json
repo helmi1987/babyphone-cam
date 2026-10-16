@@ -7,7 +7,7 @@
     "description": "Open-Source-Babyphone für dein Heimnetz: Kamera und Mikrofon im Browser, ein Docker-Container, kein Konto, keine App, keine Cloud. Nichts wird aufgezeichnet.",
     "skip": "Zum Inhalt springen",
     "langLabel": "Sprache",
-    "nav": { "features": "Funktionen", "how": "So funktioniert es", "screens": "Bilder", "privacy": "Datenschutz", "install": "Installation", "faq": "FAQ" },
+    "nav": { "features": "Funktionen", "how": "So funktioniert es", "screens": "Bilder", "privacy": "Datenschutz", "install": "Installation", "faq": "FAQ", "donate": "Spenden" },
     "claim": "Das Babyphone, das nur in deinem Heimnetz lebt.",
     "sub": "Ein altes Handy oder Tablet wird zur Kamera beim Kind, jedes andere Gerät zum Elterngerät. Alles läuft im Browser über einen eigenen Docker-Container – ohne App, ohne Konto, ohne Cloud.",
     "ctaInstall": "Installieren",
@@ -84,6 +84,19 @@
       "Ports 443/tcp (Web, WebSocket), 80/tcp (Weiterleitung auf HTTPS) und 40000/udp + tcp (Medien).",
       "Ausgelegt für aktuelle Browser (Chrome, Firefox, Safari, Edge) mit Kamera- bzw. Mikrofonzugriff."
     ],
+    "donate": {
+      "title": "Wunschzettel",
+      "lead": "babyphone-cam ist gratis und bleibt es. Wer trotzdem etwas geben möchte: Spenden gehen in Spielsachen, Kinderzubehör und Kaffee für die Eltern.",
+      "items": [
+        { "icon": "☕", "t": "Kaffee für die Nachtschicht", "d": "Für Eltern, die um 3 Uhr wach sind.", "chf": 5 },
+        { "icon": "🦆", "t": "Gummiente", "d": "Quietscht zuverlässiger als jeder Alarm.", "chf": 10 },
+        { "icon": "🧸", "t": "Neuer Teddy", "d": "Der alte wurde zu oft gewaschen.", "chf": 20 },
+        { "icon": "🎁", "t": "Überraschung", "d": "Du wählst den Betrag.", "chf": 0 }
+      ],
+      "free": "Betrag frei",
+      "btn": "Mit PayPal spenden",
+      "note": "Zahlung über PayPal (paypal.me/helmi1987). Freiwillig, ohne Gegenleistung."
+    },
     "faqTitle": "Häufige Fragen",
     "faq": [
       { "q": "Brauche ich eine App?", "a": "Nein. Kind- und Elterngerät nutzen nur den Browser." },
@@ -107,7 +120,7 @@
     "description": "Open-source baby monitor for your home network: camera and microphone in the browser, one Docker container, no account, no app, no cloud. Nothing is recorded.",
     "skip": "Skip to content",
     "langLabel": "Language",
-    "nav": { "features": "Features", "how": "How it works", "screens": "Screenshots", "privacy": "Privacy", "install": "Install", "faq": "FAQ" },
+    "nav": { "features": "Features", "how": "How it works", "screens": "Screenshots", "privacy": "Privacy", "install": "Install", "faq": "FAQ", "donate": "Donate" },
     "claim": "The baby monitor that lives only in your home network.",
     "sub": "An old phone or tablet becomes the camera next to your child, any other device becomes the parent unit. Everything runs in the browser through your own Docker container – no app, no account, no cloud.",
     "ctaInstall": "Install",
@@ -184,6 +197,19 @@
       "Ports 443/tcp (web, WebSocket), 80/tcp (redirect to HTTPS) and 40000/udp + tcp (media).",
       "Designed for current browsers (Chrome, Firefox, Safari, Edge) with camera or microphone access."
     ],
+    "donate": {
+      "title": "Wish list",
+      "lead": "babyphone-cam is free and stays free. If you still want to give something: donations go into toys, baby gear and coffee for the parents.",
+      "items": [
+        { "icon": "☕", "t": "Coffee for the night shift", "d": "For parents who are awake at 3 a.m.", "chf": 5 },
+        { "icon": "🦆", "t": "Rubber duck", "d": "Squeaks more reliably than any alarm.", "chf": 10 },
+        { "icon": "🧸", "t": "New teddy bear", "d": "The old one was washed too often.", "chf": 20 },
+        { "icon": "🎁", "t": "Surprise", "d": "You choose the amount.", "chf": 0 }
+      ],
+      "free": "Any amount",
+      "btn": "Donate with PayPal",
+      "note": "Payment via PayPal (paypal.me/helmi1987). Voluntary, nothing in return."
+    },
     "faqTitle": "FAQ",
     "faq": [
       { "q": "Do I need an app?", "a": "No. Child and parent devices only use the browser." },
@@ -207,7 +233,7 @@
     "description": "Baby monitor open source per la rete di casa: fotocamera e microfono nel browser, un solo container Docker, nessun account, nessuna app, nessun cloud. Non viene registrato nulla.",
     "skip": "Vai al contenuto",
     "langLabel": "Lingua",
-    "nav": { "features": "Funzioni", "how": "Come funziona", "screens": "Immagini", "privacy": "Privacy", "install": "Installazione", "faq": "FAQ" },
+    "nav": { "features": "Funzioni", "how": "Come funziona", "screens": "Immagini", "privacy": "Privacy", "install": "Installazione", "faq": "FAQ", "donate": "Dona" },
     "claim": "Il baby monitor che vive solo nella tua rete di casa.",
     "sub": "Un vecchio telefono o tablet diventa la telecamera accanto al bambino, qualsiasi altro dispositivo diventa l'unità genitori. Tutto funziona nel browser tramite il tuo container Docker – senza app, senza account, senza cloud.",
     "ctaInstall": "Installa",
@@ -284,6 +310,19 @@
       "Porte 443/tcp (web, WebSocket), 80/tcp (reindirizzamento a HTTPS) e 40000/udp + tcp (media).",
       "Pensato per browser attuali (Chrome, Firefox, Safari, Edge) con accesso a camera o microfono."
     ],
+    "donate": {
+      "title": "Lista dei desideri",
+      "lead": "babyphone-cam è gratuito e lo resta. Se vuoi comunque dare qualcosa: le donazioni vanno in giocattoli, accessori per bambini e caffè per i genitori.",
+      "items": [
+        { "icon": "☕", "t": "Caffè per il turno di notte", "d": "Per i genitori svegli alle 3 di notte.", "chf": 5 },
+        { "icon": "🦆", "t": "Paperella di gomma", "d": "Squittisce in modo più affidabile di qualsiasi allarme.", "chf": 10 },
+        { "icon": "🧸", "t": "Nuovo orsacchiotto", "d": "Quello vecchio è stato lavato troppe volte.", "chf": 20 },
+        { "icon": "🎁", "t": "Sorpresa", "d": "Scegli tu l’importo.", "chf": 0 }
+      ],
+      "free": "Importo libero",
+      "btn": "Dona con PayPal",
+      "note": "Pagamento tramite PayPal (paypal.me/helmi1987). Volontario, senza contropartita."
+    },
     "faqTitle": "Domande frequenti",
     "faq": [
       { "q": "Serve un'app?", "a": "No. I dispositivi del bambino e dei genitori usano solo il browser." },
@@ -307,7 +346,7 @@
     "description": "Babyphone open source pour votre réseau domestique : caméra et micro dans le navigateur, un seul conteneur Docker, sans compte, sans app, sans cloud. Rien n'est enregistré.",
     "skip": "Aller au contenu",
     "langLabel": "Langue",
-    "nav": { "features": "Fonctions", "how": "Fonctionnement", "screens": "Images", "privacy": "Confidentialité", "install": "Installation", "faq": "FAQ" },
+    "nav": { "features": "Fonctions", "how": "Fonctionnement", "screens": "Images", "privacy": "Confidentialité", "install": "Installation", "faq": "FAQ", "donate": "Faire un don" },
     "claim": "Le babyphone qui reste dans votre réseau domestique.",
     "sub": "Un ancien téléphone ou une tablette devient la caméra près de l'enfant, n'importe quel autre appareil devient l'unité parents. Tout fonctionne dans le navigateur via votre propre conteneur Docker – sans app, sans compte, sans cloud.",
     "ctaInstall": "Installer",
@@ -384,6 +423,19 @@
       "Ports 443/tcp (web, WebSocket), 80/tcp (redirection vers HTTPS) et 40000/udp + tcp (médias).",
       "Conçu pour les navigateurs actuels (Chrome, Firefox, Safari, Edge) avec accès à la caméra ou au micro."
     ],
+    "donate": {
+      "title": "Liste de souhaits",
+      "lead": "babyphone-cam est gratuit et le reste. Si vous voulez quand même donner quelque chose : les dons servent à des jouets, des accessoires pour enfants et du café pour les parents.",
+      "items": [
+        { "icon": "☕", "t": "Café pour le service de nuit", "d": "Pour les parents réveillés à 3 h du matin.", "chf": 5 },
+        { "icon": "🦆", "t": "Canard en caoutchouc", "d": "Couine plus sûrement que n’importe quelle alarme.", "chf": 10 },
+        { "icon": "🧸", "t": "Nouveau nounours", "d": "L’ancien a été lavé trop souvent.", "chf": 20 },
+        { "icon": "🎁", "t": "Surprise", "d": "Vous choisissez le montant.", "chf": 0 }
+      ],
+      "free": "Montant libre",
+      "btn": "Faire un don avec PayPal",
+      "note": "Paiement via PayPal (paypal.me/helmi1987). Volontaire, sans contrepartie."
+    },
     "faqTitle": "Questions fréquentes",
     "faq": [
       { "q": "Faut-il une app ?", "a": "Non. Les appareils enfant et parents utilisent seulement le navigateur." },
