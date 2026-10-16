@@ -105,8 +105,42 @@ button.small { padding: 0 12px; }
 /* Start */
 .start { text-align: center; padding-top: 12vh; }
 .start .title { font-size: 2rem; margin-bottom: 8px; }
-.install { margin-top: 12px; }
-.install-help { max-width: 26rem; margin: 10px auto 0; font-size: 0.9rem; }
+/* "Add to home screen" hint (start screen, phones) */
+.install-hint {
+  position: fixed;
+  z-index: 150;
+  left: 8px;
+  right: 8px;
+  bottom: calc(12px + env(safe-area-inset-bottom));
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 12px 38px 12px 12px;
+  background: var(--panel);
+  border: 1.5px solid var(--panel-2);
+  border-radius: var(--radius);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  text-align: left;
+}
+.install-hint[hidden], .install-text [hidden] { display: none; }
+.install-hint img { border-radius: 10px; flex: none; }
+.install-text { display: flex; flex-direction: column; gap: 2px; flex: 1; font-size: 0.9rem; line-height: 1.35; }
+.install-share { width: 1.1em; height: 1.1em; vertical-align: -0.2em; color: var(--accent); }
+.install-hint .primary { flex: none; }
+.install-close {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  min-height: 0;
+  padding: 0 4px;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font-size: 1.5rem;
+  line-height: 1;
+}
 .roles {
   display: grid;
   gap: 16px;
@@ -524,3 +558,4 @@ textarea:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; 
 .steps li.done { background: rgba(79, 140, 255, 0.5); }
 .steps li.current { background: var(--accent); }
 .step-title { color: var(--text); font-size: 1.25rem; margin-top: 16px; }
+.start:has(.install-hint:not([hidden])) { padding-bottom: 140px; }
