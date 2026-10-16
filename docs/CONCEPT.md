@@ -37,6 +37,8 @@ default; ENV is only the start value, empty ENV = unset. PINs are stored as
 scrypt hashes; ENV PINs are hashed in memory at start. Infrastructure is ENV
 only: `DATA_DIR`, `CERTS_DIR`, `PUID`, `PGID`, `TZ`, `WEBHOOK_TEST`.
 Invalid ENV values stop the start unless settings.json overrides them.
+Every save copies values whose source is still ENV (PINs as hash) into
+settings.json, so ENV can be removed afterwards.
 Restart needed for: ports, `ANNOUNCED_IP`, `TLS_SOURCE`, Cert Warden and
 `TLS_CERT`/`TLS_KEY`; everything else applies live.
 

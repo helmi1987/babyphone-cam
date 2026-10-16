@@ -160,6 +160,17 @@ export async function buildChanges(values, { setup, ip }) {
 
   if (Object.keys(errors).length) return { errors };
   for (const [role, pin] of Object.entries(newPins)) changes[PIN_KEYS[role]] = await hashPin(pin);
+  // Adopt values that still come from ENV, so saving makes the backend the only source
+  // and the ENV variables can be removed afterwards.
+  for (const f of FIELDS) {
+    if (f.key in changes) continue;
+    if (f.type === 'pin') {
+      const role = ROLE_OF[f.key];
+      if (pinSource(role) === 'env') changes[f.key] = pinHash(role);
+    } else if (sourceOf(f.key) === 'env') {
+      changes[f.key] = effective(f.key);
+    }
+  }
   return { changes, pinRoles: Object.keys(newPins) };
 }
 

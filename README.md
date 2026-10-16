@@ -44,7 +44,9 @@ Everything except infrastructure is set in the browser:
   ENV start value or default). Secrets (PINs, Cert Warden API keys, webhook
   URLs and headers) are never sent to the browser: empty field = unchanged.
 - Saved in `DATA_DIR/settings.json` (0600, PINs as scrypt hashes). A value
-  saved there wins over ENV; ENV only gives start values.
+  saved there wins over ENV; ENV only gives start values. Every save (and setting
+  the admin PIN) copies all values still coming from ENV into settings.json,
+  so the ENV variables can be removed afterwards.
 - Most changes apply at once (a changed PIN signs that role out). Ports,
   announced IP and the certificate source need a restart: the page offers a
   button; the container restarts through its restart policy.
