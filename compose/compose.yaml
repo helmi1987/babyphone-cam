@@ -18,54 +18,18 @@ services:
       net.ipv4.ip_unprivileged_port_start: 80
     pids_limit: 200
     environment:
+      # Infrastructure (only here)
       - TZ=${TZ:-}
       - PUID=${PUID:-99}
       - PGID=${PGID:-100}
-      # Access
-      - PARENT_PIN=${PARENT_PIN:?PARENT_PIN is missing in .env}
-      - CHILD_PIN=${CHILD_PIN:?CHILD_PIN is missing in .env}
-      - CHILD_NAMES=${CHILD_NAMES:-}
-      - ALLOWED_CIDRS=${ALLOWED_CIDRS:-}
-      - HOSTS=${HOSTS:-}
-      # Network
-      - ANNOUNCED_IP=${BABYPHONE_IP}
-      - HTTPS_PORT=443
-      - HTTP_PORT=80
-      - RTC_PORT=${RTC_PORT:-40000}
-      # HTTPS: folder
-      - TLS_CERT=${TLS_CERT:-}
-      - TLS_KEY=${TLS_KEY:-}
       - CERTS_DIR=/certs
-      # HTTPS: Cert Warden (replaces the folder)
-      - CERTWARDEN_ENDPOINT_URL=${CERTWARDEN_ENDPOINT_URL:-}
-      - CERT_NAME=${CERT_NAME:-}
-      - CERT_CERT_API=${CERT_CERT_API:-}
-      - CERT_KEY_API=${CERT_KEY_API:-}
-      - CERT_CHECK_DAY=${CERT_CHECK_DAY:-30}
-      # Presence and alarms
-      - HEARTBEAT_TIMEOUT=${HEARTBEAT_TIMEOUT:-20}
-      - ALARM_DELAY=${ALARM_DELAY:-30}
-      - OFFLINE_TIMEOUT=${OFFLINE_TIMEOUT:-600}
-      - ALARM_UNACKED_DELAY=${ALARM_UNACKED_DELAY:-60}
-      - SOUND_THRESHOLD=${SOUND_THRESHOLD:-25}
-      - MOTION_THRESHOLD=${MOTION_THRESHOLD:-4}
-      # Webhooks (up to 5: WEBHOOK_1_* .. WEBHOOK_5_*)
-      - WEBHOOK_TEST=${WEBHOOK_TEST:-}
-      - WEBHOOK_1_URL=${WEBHOOK_1_URL:-}
-      - WEBHOOK_1_METHOD=${WEBHOOK_1_METHOD:-POST}
-      - WEBHOOK_1_HEADERS=${WEBHOOK_1_HEADERS:-}
-      - WEBHOOK_1_BODY=${WEBHOOK_1_BODY:-}
-      - WEBHOOK_1_EVENTS=${WEBHOOK_1_EVENTS:-}
-      - WEBHOOK_2_URL=${WEBHOOK_2_URL:-}
-      - WEBHOOK_2_METHOD=${WEBHOOK_2_METHOD:-POST}
-      - WEBHOOK_2_HEADERS=${WEBHOOK_2_HEADERS:-}
-      - WEBHOOK_2_BODY=${WEBHOOK_2_BODY:-}
-      - WEBHOOK_2_EVENTS=${WEBHOOK_2_EVENTS:-}
-      - WEBHOOK_3_URL=${WEBHOOK_3_URL:-}
-      - WEBHOOK_3_METHOD=${WEBHOOK_3_METHOD:-POST}
-      - WEBHOOK_3_HEADERS=${WEBHOOK_3_HEADERS:-}
-      - WEBHOOK_3_BODY=${WEBHOOK_3_BODY:-}
-      - WEBHOOK_3_EVENTS=${WEBHOOK_3_EVENTS:-}
+      # Optional start values. Everything else is set in the web UI
+      # (first-start wizard, then "Einstellungen"); values saved there win over ENV.
+      # Empty PINs = the wizard opens on the first visit.
+      - ADMIN_PIN=${ADMIN_PIN:-}
+      - PARENT_PIN=${PARENT_PIN:-}
+      - CHILD_PIN=${CHILD_PIN:-}
+      - ANNOUNCED_IP=${BABYPHONE_IP}
     volumes:
       - ${DATA_DIR:-/mnt/user/appdata/babyphone}:/data
       - ${CERTS_DIR:-/mnt/user/appdata/Nginx-Proxy-Manager-Official/letsencrypt}:/certs:ro

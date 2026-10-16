@@ -5,64 +5,38 @@ import fs from 'node:fs';
 import net from 'node:net';
 import path from 'node:path';
 import crypto from 'node:crypto';
-import { config, log } from './config.js';
+import { config, envPin, log, storedValue } from './config.js';
+import { PIN_KEYS, ipInCidrs, normalizeIp, parseCidr } from './settings.js';
 
 export const COOKIE_NAME = 'bp_session';
 export const COOKIE_MAX_AGE = 90 * 86400; // seconds
+export const ADMIN_COOKIE = 'bp_admin';
+export const ADMIN_MAX_AGE = 3600; // seconds
 const RATE_WINDOW_MS = 5 * 60 * 1000;
 const RATE_MAX_FAILS = 5;
 const LOCAL_SUFFIXES = ['.local', '.lan', '.home', '.home.arpa', '.internal', '.fritz.box', '.ts.net'];
 
 // ---------------------------------------------------------------- IP allowlist
 
-export function normalizeIp(ip) {
-  let s = String(ip || '').trim();
-  const pct = s.indexOf('%');
-  if (pct >= 0) s = s.slice(0, pct);
-  const m = s.match(/^::ffff:(\d+\.\d+\.\d+\.\d+)$/i);
-  return m ? m[1] : s;
-}
+export { normalizeIp };
 
-function ipToBig(ip) {
-  if (net.isIPv4(ip)) {
-    return { v: 4, n: ip.split('.').reduce((acc, p) => (acc << 8n) + BigInt(Number(p)), 0n) };
+let cidrCache = { src: null, list: [] };
+
+// Re-parsed whenever the settings replace config.allowedCidrs.
+function allowedCidrs() {
+  if (cidrCache.src !== config.allowedCidrs) {
+    const list = config.allowedCidrs.map((c) => {
+      const p = parseCidr(c);
+      if (!p) log(`config: ignoring invalid CIDR ${c}`);
+      return p;
+    }).filter(Boolean);
+    cidrCache = { src: config.allowedCidrs, list };
   }
-  if (!net.isIPv6(ip)) return null;
-  let s = ip;
-  const v4 = s.match(/(\d+\.\d+\.\d+\.\d+)$/);
-  if (v4) {
-    const o = v4[1].split('.').map(Number);
-    s = s.slice(0, -v4[1].length) + `${((o[0] << 8) | o[1]).toString(16)}:${((o[2] << 8) | o[3]).toString(16)}`;
-  }
-  const [head, tail] = s.split('::');
-  const h = head ? head.split(':') : [];
-  const t = tail !== undefined && tail ? tail.split(':') : [];
-  const groups = s.includes('::') ? [...h, ...Array(8 - h.length - t.length).fill('0'), ...t] : h;
-  if (groups.length !== 8) return null;
-  return { v: 6, n: groups.reduce((acc, g) => (acc << 16n) + BigInt(parseInt(g || '0', 16)), 0n) };
+  return cidrCache.list;
 }
-
-function parseCidr(cidr) {
-  const [addr, bitsRaw] = cidr.split('/');
-  const ip = ipToBig(normalizeIp(addr));
-  if (!ip) return null;
-  const width = ip.v === 4 ? 32 : 128;
-  const bits = bitsRaw === undefined ? width : Number(bitsRaw);
-  if (!Number.isInteger(bits) || bits < 0 || bits > width) return null;
-  const mask = bits === 0 ? 0n : ((1n << BigInt(bits)) - 1n) << BigInt(width - bits);
-  return { v: ip.v, net: ip.n & mask, mask };
-}
-
-const cidrs = config.allowedCidrs.map((c) => {
-  const p = parseCidr(c);
-  if (!p) log(`config: ignoring invalid CIDR ${c}`);
-  return p;
-}).filter(Boolean);
 
 export function ipAllowed(rawIp) {
-  const ip = ipToBig(normalizeIp(rawIp));
-  if (!ip) return false;
-  return cidrs.some((c) => c.v === ip.v && (ip.n & c.mask) === c.net);
+  return ipInCidrs(rawIp, allowedCidrs());
 }
 
 // ---------------------------------------------------------------- host check
@@ -109,28 +83,97 @@ function loadSecret() {
 
 const secret = loadSecret();
 
-function pinFor(role) {
-  return role === 'parent' ? config.parentPin : role === 'child' ? config.childPin : null;
+// ---------------------------------------------------------------- PINs
+
+// PINs are kept as scrypt hashes only: settings.json stores them, ENV PINs are
+// hashed at start with a salt derived from the secret (stable across restarts).
+const SCRYPT = { N: 16384, r: 8, p: 1, len: 32 };
+const MAX_PIN_INPUT = 256; // longer input is cut, for ENV PINs too
+const MAX_SCRYPT = 4; // concurrent hashes, protects the libuv threadpool
+let scryptActive = 0;
+const scryptQueue = [];
+
+async function scrypt(pin, salt, N, r, p) {
+  while (scryptActive >= MAX_SCRYPT) await new Promise((resolve) => scryptQueue.push(resolve));
+  scryptActive++;
+  try {
+    return await new Promise((resolve, reject) => {
+      crypto.scrypt(pin, salt, SCRYPT.len, { N, r, p, maxmem: 64 * 1024 * 1024 }, (e, key) => (e ? reject(e) : resolve(key)));
+    });
+  } finally {
+    scryptActive--;
+    scryptQueue.shift()?.();
+  }
 }
 
-function hmacKey(role) {
-  return crypto.createHash('sha256').update(secret).update(pinFor(role)).digest();
+function formatHash(salt, key) {
+  return `scrypt$${SCRYPT.N}$${SCRYPT.r}$${SCRYPT.p}$${salt.toString('base64url')}$${key.toString('base64url')}`;
 }
+
+function parseHash(s) {
+  const m = String(s || '').match(/^scrypt\$(\d+)\$(\d+)\$(\d+)\$([A-Za-z0-9_-]+)\$([A-Za-z0-9_-]+)$/);
+  if (!m) return null;
+  const [N, r, p] = [Number(m[1]), Number(m[2]), Number(m[3])];
+  if (N < 1024 || N > 1 << 20 || r < 1 || r > 32 || p < 1 || p > 16) return null;
+  return { N, r, p, salt: Buffer.from(m[4], 'base64url'), key: Buffer.from(m[5], 'base64url') };
+}
+
+export async function hashPin(pin) {
+  const salt = crypto.randomBytes(16);
+  return formatHash(salt, await scrypt(String(pin).slice(0, MAX_PIN_INPUT), salt, SCRYPT.N, SCRYPT.r, SCRYPT.p));
+}
+
+const envHashes = {};
+for (const [role, key] of Object.entries(PIN_KEYS)) {
+  const plain = envPin(key);
+  if (!plain) continue;
+  const salt = crypto.createHmac('sha256', secret).update(`env-pin:${role}`).digest().subarray(0, 16);
+  envHashes[role] = formatHash(salt, crypto.scryptSync(plain.slice(0, MAX_PIN_INPUT), salt, SCRYPT.len, { N: SCRYPT.N, r: SCRYPT.r, p: SCRYPT.p }));
+}
+
+// Effective PIN hash of a role or null.
+export function pinHash(role) {
+  const key = PIN_KEYS[role];
+  if (!key) return null;
+  const s = storedValue(key);
+  return (typeof s === 'string' && s) ? s : envHashes[role] || null;
+}
+
+export function pinSource(role) {
+  const s = storedValue(PIN_KEYS[role]);
+  if (typeof s === 'string' && s) return 'settings';
+  return envHashes[role] ? 'env' : 'default';
+}
+
+// Setup is needed while parents or children cannot log in.
+export function setupMode() {
+  return !pinHash('parent') || !pinHash('child');
+}
+
+export async function verifyHash(hash, pin) {
+  const p = parseHash(hash);
+  if (!p) return false;
+  const got = await scrypt(String(pin ?? '').slice(0, MAX_PIN_INPUT), p.salt, p.N, p.r, p.p);
+  return got.length === p.key.length && crypto.timingSafeEqual(got, p.key);
+}
+
+export async function checkPin(role, pin) {
+  const hash = pinHash(role);
+  if (!hash) return false;
+  return verifyHash(hash, pin);
+}
+
+// ---------------------------------------------------------------- cookies
 
 function mac(role, issued) {
-  return crypto.createHmac('sha256', hmacKey(role)).update(`${role}.${issued}`).digest('base64url');
+  const key = crypto.createHash('sha256').update(secret).update(pinHash(role) || '').digest();
+  return crypto.createHmac('sha256', key).update(`${role}.${issued}`).digest('base64url');
 }
 
 function safeEqual(a, b) {
   const ha = crypto.createHash('sha256').update(String(a)).digest();
   const hb = crypto.createHash('sha256').update(String(b)).digest();
   return crypto.timingSafeEqual(ha, hb);
-}
-
-export function checkPin(role, pin) {
-  const expected = pinFor(role);
-  if (!expected) return false;
-  return safeEqual(String(pin ?? ''), expected);
 }
 
 export function makeSession(role) {
@@ -146,6 +189,14 @@ export function clearCookie() {
   return `${COOKIE_NAME}=; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=0`;
 }
 
+export function adminCookie(value) {
+  return `${ADMIN_COOKIE}=${value}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=${ADMIN_MAX_AGE}`;
+}
+
+export function clearAdminCookie() {
+  return `${ADMIN_COOKIE}=; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=0`;
+}
+
 export function parseCookies(header) {
   const out = {};
   for (const part of String(header || '').split(';')) {
@@ -156,19 +207,26 @@ export function parseCookies(header) {
   return out;
 }
 
-// Returns 'parent' | 'child' | null.
-export function roleFromRequest(req) {
-  const value = parseCookies(req.headers.cookie)[COOKIE_NAME];
+function verifySession(value, roles, maxAge) {
   if (!value) return null;
   const parts = value.split('.');
   if (parts.length !== 3) return null;
   const [role, issuedRaw, sig] = parts;
-  if (role !== 'parent' && role !== 'child') return null;
+  if (!roles.includes(role) || !pinHash(role)) return null;
   const issued = Number(issuedRaw);
   if (!Number.isInteger(issued)) return null;
   const now = Math.floor(Date.now() / 1000);
-  if (issued > now + 60 || now - issued > COOKIE_MAX_AGE) return null;
+  if (issued > now + 60 || now - issued > maxAge) return null;
   return safeEqual(sig, mac(role, issuedRaw)) ? role : null;
+}
+
+// Returns 'parent' | 'child' | null.
+export function roleFromRequest(req) {
+  return verifySession(parseCookies(req.headers.cookie)[COOKIE_NAME], ['parent', 'child'], COOKIE_MAX_AGE);
+}
+
+export function isAdmin(req) {
+  return verifySession(parseCookies(req.headers.cookie)[ADMIN_COOKIE], ['admin'], ADMIN_MAX_AGE) === 'admin';
 }
 
 // ---------------------------------------------------------------- rate limit
@@ -187,10 +245,30 @@ export function rateLimited(ip) {
   return recent(ip).length >= RATE_MAX_FAILS;
 }
 
-export function recordFailure(ip) {
+const inflight = new Map(); // ip -> PIN checks running
+const MAX_INFLIGHT = 2;
+
+// Reserve a PIN attempt before the (async) check: it counts as a failure until
+// endAttempt(attempt, true). Returns null when limited.
+export function beginAttempt(ip) {
+  if (rateLimited(ip) || (inflight.get(ip) || 0) >= MAX_INFLIGHT) return null;
   const list = recent(ip);
-  list.push(Date.now());
+  const ts = Date.now();
+  list.push(ts);
   failures.set(ip, list);
+  inflight.set(ip, (inflight.get(ip) || 0) + 1);
+  return { ip, ts };
+}
+
+export function endAttempt(attempt, success) {
+  const n = (inflight.get(attempt.ip) || 1) - 1;
+  if (n > 0) inflight.set(attempt.ip, n);
+  else inflight.delete(attempt.ip);
+  if (!success) return;
+  const list = failures.get(attempt.ip) || [];
+  const i = list.indexOf(attempt.ts);
+  if (i >= 0) list.splice(i, 1);
+  if (!list.length) failures.delete(attempt.ip);
 }
 
 setInterval(() => {

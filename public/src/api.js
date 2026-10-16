@@ -25,6 +25,24 @@ export async function login(role, pin) {
   return { ok: r.ok, status: r.status };
 }
 
+// JSON request for the settings pages: {ok, status, data}. Throws only when unreachable.
+export async function requestJson(url, body) {
+  const opts = { credentials: 'same-origin', cache: 'no-store' };
+  if (body !== undefined) {
+    opts.method = 'POST';
+    opts.headers = { 'Content-Type': 'application/json' };
+    opts.body = JSON.stringify(body);
+  }
+  const r = await fetch(url, opts);
+  let data = null;
+  try {
+    data = await r.json();
+  } catch {
+    // no JSON body
+  }
+  return { ok: r.ok, status: r.status, data };
+}
+
 export async function logout() {
   try {
     await fetch('/api/logout', { method: 'POST', credentials: 'same-origin' });

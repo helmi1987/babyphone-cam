@@ -7,18 +7,20 @@ import https from 'node:https';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { WebSocketServer } from 'ws';
-import { config, log } from './config.js';
+import { config, log, restartPending, saveSettings } from './config.js';
+import { buildChanges, settingsState, testCertwarden, testWebhookInput } from './admin.js';
 import { CertManager } from './certs.js';
 import { Media } from './media.js';
 import { Hub } from './hub.js';
 import { webhookStartup } from './webhooks.js';
 import {
-  SECURITY_HEADERS, checkPin, clearCookie, hostWithoutPort, ipAllowed, knownHost, makeSession,
-  normalizeIp, rateLimited, recordFailure, roleFromRequest, sessionCookie,
+  SECURITY_HEADERS, adminCookie, beginAttempt, endAttempt, checkPin, clearAdminCookie, clearCookie, hostWithoutPort, ipAllowed, isAdmin,
+  knownHost, makeSession, normalizeIp, pinHash, roleFromRequest, sessionCookie, setupMode,
 } from './security.js';
 
 const PUBLIC_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'public');
 const MAX_BODY = 4096;
+const MAX_SETTINGS_BODY = 64 * 1024;
 const MIME = {
   '.html': 'text/html; charset=utf-8',
   '.js': 'text/javascript; charset=utf-8',
@@ -43,6 +45,9 @@ const MIME = {
 const certs = new CertManager();
 const media = new Media();
 let hub;
+let wss;
+let shutdown = () => process.exit(0);
+const wsRoles = new WeakMap(); // ws -> role
 
 process.on('unhandledRejection', (e) => log(`unhandled rejection: ${e?.message || e}`));
 
@@ -70,13 +75,13 @@ function sameOrigin(req) {
   }
 }
 
-function readBody(req) {
+function readBody(req, limit = MAX_BODY) {
   return new Promise((resolve, reject) => {
     const chunks = [];
     let size = 0;
     req.on('data', (c) => {
       size += c.length;
-      if (size > MAX_BODY) {
+      if (size > limit) {
         reject(new Error('too large'));
         req.destroy();
         return;
@@ -90,11 +95,37 @@ function readBody(req) {
 
 // ---------------------------------------------------------------- API
 
-async function login(req, res, ip) {
-  if (rateLimited(ip)) {
-    log(`login: rate limited ${ip}`);
-    return sendJson(res, 429, { error: 'too many attempts' });
+async function readJson(req, limit) {
+  try {
+    return JSON.parse(await readBody(req, limit));
+  } catch {
+    return undefined;
   }
+}
+
+// Rate-limited PIN check; answers 429/401 itself and returns false then.
+async function pinOk(res, ip, role, pin, what) {
+  const attempt = beginAttempt(ip);
+  if (!attempt) {
+    log(`login: rate limited ${ip}`);
+    sendJson(res, 429, { error: 'too many attempts' });
+    return false;
+  }
+  let ok = false;
+  try {
+    ok = await checkPin(role, pin);
+  } finally {
+    endAttempt(attempt, ok);
+  }
+  if (!ok) {
+    log(`login: wrong PIN for ${what} from ${ip}`);
+    sendJson(res, 401, { error: 'wrong pin' });
+  }
+  return ok;
+}
+
+async function login(req, res, ip) {
+  if (setupMode()) return sendJson(res, 503, { error: 'setup' });
   let body;
   try {
     body = JSON.parse(await readBody(req));
@@ -102,14 +133,109 @@ async function login(req, res, ip) {
     return sendJson(res, 400, { error: 'bad request' });
   }
   const role = body?.role;
-  if (role !== 'parent' && role !== 'child') return sendJson(res, 400, { error: 'invalid role' });
-  if (!checkPin(role, body.pin)) {
-    recordFailure(ip);
-    log(`login: wrong PIN for ${role} from ${ip}`);
-    return sendJson(res, 401, { error: 'wrong pin' });
-  }
+  if (role !== 'parent' && role !== 'child' && role !== 'admin') return sendJson(res, 400, { error: 'invalid role' });
+  if (!(await pinOk(res, ip, role, body.pin, `${role} login`))) return undefined;
   log(`login: ${role} from ${ip}`);
-  return sendJson(res, 200, { role }, { 'Set-Cookie': sessionCookie(makeSession(role)) });
+  const cookie = role === 'admin' ? adminCookie(makeSession(role)) : sessionCookie(makeSession(role));
+  return sendJson(res, 200, { role }, { 'Set-Cookie': cookie });
+}
+
+// Close the sockets of roles whose PIN changed (their cookies no longer verify).
+function kickRoles(roles) {
+  if (!wss) return;
+  for (const ws of wss.clients) {
+    if (roles.includes(wsRoles.get(ws))) ws.close(4001, 'pin changed');
+  }
+}
+
+async function saveInput(req, res, ip, setup) {
+  const body = await readJson(req, MAX_SETTINGS_BODY);
+  if (body === undefined) return sendJson(res, 400, { error: 'bad request' });
+  const r = await buildChanges(body?.values, { setup, ip });
+  if (r.errors) return sendJson(res, 400, { error: 'invalid', errors: r.errors });
+  if (setup && !setupMode()) return sendJson(res, 409, { error: 'not in setup' });
+  try {
+    saveSettings(r.changes);
+  } catch (e) {
+    log(`settings: cannot write (${e.code || e.message})`);
+    return sendJson(res, 500, { error: 'write failed' });
+  }
+  kickRoles(r.pinRoles.filter((role) => role !== 'admin'));
+  const headers = {};
+  // Setup ends signed in as admin; an admin changing the admin PIN stays signed in
+  if (setup || r.pinRoles.includes('admin')) headers['Set-Cookie'] = adminCookie(makeSession('admin'));
+  log(`settings: ${setup ? 'setup finished' : 'changed by admin'} from ${ip}`);
+  return sendJson(res, 200, { ok: true, changed: Object.keys(r.changes), restartPending: restartPending() }, headers);
+}
+
+async function runTest(req, res, fn) {
+  const body = await readJson(req, MAX_SETTINGS_BODY);
+  if (body === undefined) return sendJson(res, 400, { error: 'bad request' });
+  return sendJson(res, 200, await fn(body));
+}
+
+const postOnly = (res) => sendJson(res, 405, { error: 'method not allowed' }, { Allow: 'POST' });
+
+async function setupApi(req, res, pathname, ip) {
+  if (!setupMode()) return sendJson(res, 409, { error: 'not in setup' });
+  if (pathname === '/api/setup/state') {
+    if (req.method !== 'GET') return sendJson(res, 405, { error: 'method not allowed' }, { Allow: 'GET' });
+    return sendJson(res, 200, settingsState());
+  }
+  if (req.method !== 'POST') return postOnly(res);
+  if (pathname === '/api/setup') return saveInput(req, res, ip, true);
+  if (pathname === '/api/setup/test-certwarden') return runTest(req, res, testCertwarden);
+  if (pathname === '/api/setup/test-webhook') return runTest(req, res, testWebhookInput);
+  return sendJson(res, 404, { error: 'not found' });
+}
+
+// No admin PIN yet (ENV setups): the parent PIN authorises setting one.
+async function claimAdmin(req, res, ip) {
+  if (pinHash('admin')) return sendJson(res, 409, { error: 'admin pin exists' });
+  const body = await readJson(req);
+  if (!body || typeof body !== 'object') return sendJson(res, 400, { error: 'bad request' });
+  if (!(await pinOk(res, ip, 'parent', body.parentPin, 'admin claim (parent PIN)'))) return undefined;
+  if (typeof body.adminPin !== 'string' || !body.adminPin) {
+    return sendJson(res, 400, { error: 'invalid', errors: { ADMIN_PIN: { code: 'pin' } } });
+  }
+  const r = await buildChanges({ ADMIN_PIN: body.adminPin }, { setup: false, ip });
+  if (r.errors) return sendJson(res, 400, { error: 'invalid', errors: r.errors });
+  if (pinHash('admin')) return sendJson(res, 409, { error: 'admin pin exists' });
+  try {
+    saveSettings(r.changes);
+  } catch (e) {
+    log(`settings: cannot write (${e.code || e.message})`);
+    return sendJson(res, 500, { error: 'write failed' });
+  }
+  log(`login: admin PIN set from ${ip}`);
+  return sendJson(res, 200, { role: 'admin' }, { 'Set-Cookie': adminCookie(makeSession('admin')) });
+}
+
+async function adminApi(req, res, pathname, ip) {
+  if (pathname === '/api/admin/logout') {
+    if (req.method !== 'POST') return postOnly(res);
+    return sendJson(res, 200, { ok: true }, { 'Set-Cookie': clearAdminCookie() });
+  }
+  if (setupMode()) return sendJson(res, 503, { error: 'setup' });
+  if (pathname === '/api/admin/claim') {
+    if (req.method !== 'POST') return postOnly(res);
+    return claimAdmin(req, res, ip);
+  }
+  if (!isAdmin(req)) return sendJson(res, 401, { error: 'unauthorized' });
+  if (pathname === '/api/admin/settings') {
+    if (req.method === 'GET') return sendJson(res, 200, settingsState());
+    if (req.method !== 'POST') return sendJson(res, 405, { error: 'method not allowed' }, { Allow: 'GET, POST' });
+    return saveInput(req, res, ip, false);
+  }
+  if (req.method !== 'POST') return postOnly(res);
+  if (pathname === '/api/admin/test-certwarden') return runTest(req, res, testCertwarden);
+  if (pathname === '/api/admin/test-webhook') return runTest(req, res, testWebhookInput);
+  if (pathname === '/api/admin/restart') {
+    log(`restart requested by admin from ${ip}`);
+    res.on('finish', () => setTimeout(() => shutdown('restart'), 200));
+    return sendJson(res, 200, { ok: true });
+  }
+  return sendJson(res, 404, { error: 'not found' });
 }
 
 async function api(req, res, pathname, ip) {
@@ -123,10 +249,15 @@ async function api(req, res, pathname, ip) {
     if (method !== 'POST') return sendJson(res, 405, { error: 'method not allowed' }, { Allow: 'POST' });
     return sendJson(res, 200, { ok: true }, { 'Set-Cookie': clearCookie() });
   }
+  if (pathname === '/api/setup' || pathname.startsWith('/api/setup/')) return setupApi(req, res, pathname, ip);
+  if (pathname.startsWith('/api/admin/')) return adminApi(req, res, pathname, ip);
   if (pathname === '/api/config') {
     if (method !== 'GET' && method !== 'HEAD') return sendJson(res, 405, { error: 'method not allowed' }, { Allow: 'GET' });
+    if (setupMode()) return sendJson(res, 200, { setup: true, role: null, admin: false });
     return sendJson(res, 200, {
       role: roleFromRequest(req),
+      admin: isAdmin(req),
+      adminPin: Boolean(pinHash('admin')),
       childNames: config.childNames,
       soundThreshold: config.soundThreshold,
       motionThreshold: config.motionThreshold,
@@ -147,6 +278,8 @@ async function serveStatic(req, res, pathname) {
     return send(res, 400, 'Bad Request');
   }
   if (rel === '/') rel = '/index.html';
+  // Setup mode: every page request shows the wizard
+  else if (setupMode() && !path.extname(rel)) rel = '/index.html';
   if (rel.includes('\0') || rel.includes('\\')) return send(res, 400, 'Bad Request');
   const parts = rel.split('/').filter(Boolean);
   // no dotfiles, no browser sources, no traversal
@@ -238,7 +371,7 @@ function rejectUpgrade(socket, status, text) {
   socket.end(`HTTP/1.1 ${status} ${text}\r\nConnection: close\r\nContent-Length: 0\r\n\r\n`);
 }
 
-function onUpgrade(wss, req, socket, head) {
+function onUpgrade(req, socket, head) {
   socket.on('error', () => {});
   const ip = clientIp(req);
   let pathname = '';
@@ -249,9 +382,13 @@ function onUpgrade(wss, req, socket, head) {
   if (!ipAllowed(ip)) return rejectUpgrade(socket, 403, 'Forbidden');
   if (!knownHost(req.headers.host, certs.names())) return rejectUpgrade(socket, 421, 'Misdirected Request');
   if (!sameOrigin(req)) return rejectUpgrade(socket, 403, 'Forbidden');
+  if (setupMode()) return rejectUpgrade(socket, 503, 'Service Unavailable');
   const role = roleFromRequest(req);
   if (!role) return rejectUpgrade(socket, 401, 'Unauthorized');
-  wss.handleUpgrade(req, socket, head, (ws) => hub.attach(ws, role, ip));
+  wss.handleUpgrade(req, socket, head, (ws) => {
+    wsRoles.set(ws, role);
+    hub.attach(ws, role, ip);
+  });
 }
 
 // ---------------------------------------------------------------- main
@@ -265,8 +402,8 @@ async function main() {
   const server = https.createServer(certs.serverOptions(), onRequest);
   server.headersTimeout = 15000;
   server.requestTimeout = 30000;
-  const wss = new WebSocketServer({ noServer: true, maxPayload: 256 * 1024 });
-  server.on('upgrade', (req, socket, head) => onUpgrade(wss, req, socket, head));
+  wss = new WebSocketServer({ noServer: true, maxPayload: 256 * 1024 });
+  server.on('upgrade', onUpgrade);
   server.on('tlsClientError', () => {});
   certs.attach(server);
   await new Promise((resolve, reject) => {
@@ -275,6 +412,8 @@ async function main() {
   });
   log(`https: listening on ${config.httpsPort}`);
   log(`access: allowed networks ${config.allowedCidrs.join(', ')}`);
+  if (setupMode()) log('setup: PINs missing, first-start wizard active (open the page in a browser)');
+  else if (!pinHash('admin')) log('setup: ADMIN_PIN not set, set it under Einstellungen with the parent PIN');
 
   let redirect = null;
   if (config.httpPort > 0) {
@@ -286,7 +425,7 @@ async function main() {
   webhookStartup();
 
   let stopping = false;
-  const shutdown = (signal) => {
+  shutdown = (signal) => {
     if (stopping) return;
     stopping = true;
     log(`${signal} received, shutting down`);

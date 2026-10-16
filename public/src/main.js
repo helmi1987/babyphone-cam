@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2026 Stefan Diethelm
 
-// Entry: routing between start, PIN, child and parent views.
+// Entry: routing between start, PIN, child, parent, settings and setup views.
 
 import { h, mediaAvailable } from './dom.js';
 import { t } from './i18n.js';
@@ -9,6 +9,8 @@ import { getConfig, login, logout } from './api.js';
 import { installAudioUnlock, unlockAudio } from './alarm.js';
 import { mountChild } from './child.js';
 import { mountParent } from './parent.js';
+import { mountAdmin, mountClaim } from './admin.js';
+import { mountWizard } from './setup.js';
 
 const PIN_MAX = 12;
 const app = document.getElementById('app');
@@ -48,8 +50,13 @@ function go(name, arg) {
   if (name === 'child') view = mountChild(app, cfg, nav);
   else if (name === 'parent') view = mountParent(app, cfg, nav);
   else if (name === 'pin') view = renderPin(arg);
+  else if (name === 'setup') view = mountWizard(app, { mode: 'setup', nav });
+  else if (name === 'wizard') view = mountWizard(app, { mode: 'admin', nav });
+  else if (name === 'admin') view = mountAdmin(app, nav);
+  else if (name === 'claim') view = mountClaim(app, nav);
   else view = renderStart();
 }
+
 
 function renderStart(error) {
   app.replaceChildren(h('section', { class: 'view start' },
@@ -61,8 +68,15 @@ function renderStart(error) {
       h('button', { type: 'button', class: 'role', onclick: () => go('pin', 'parent') }, t('roleParent'))),
     mediaAvailable() ? null : h('p', { class: 'warn' }, window.isSecureContext ? t('noMedia') : t('insecure')),
     error ? h('p', { class: 'error', role: 'alert' }, error) : null,
+    h('button', { type: 'button', class: 'ghost small settings-link', onclick: openSettings }, `⚙ ${t('settings')}`),
   ));
   return null;
+}
+
+function openSettings() {
+  if (cfg.admin) go('admin');
+  else if (cfg.adminPin === false) go('claim');
+  else go('pin', 'admin');
 }
 
 function renderPin(role) {
@@ -90,7 +104,7 @@ function renderPin(role) {
       const r = await login(role, pin);
       if (r.ok) {
         cfg = await getConfig();
-        go(cfg.role || role);
+        go(role === 'admin' ? 'admin' : cfg.role || role);
         return;
       }
       err.textContent = r.status === 429 ? t('pinLocked') : r.status === 401 || r.status === 403 ? t('pinWrong') : t('pinError');
@@ -131,7 +145,7 @@ function renderPin(role) {
   app.replaceChildren(h('section', { class: 'view pin' },
     h('header', { class: 'bar' },
       h('button', { type: 'button', class: 'ghost', onclick: () => go('start') }, `‹ ${t('back')}`)),
-    h('h1', null, role === 'child' ? t('pinChild') : t('pinParent')),
+    h('h1', null, role === 'child' ? t('pinChild') : role === 'admin' ? t('pinAdmin') : t('pinParent')),
     dots,
     err,
     pad));
@@ -142,7 +156,8 @@ async function boot() {
   installAudioUnlock();
   try {
     cfg = await getConfig();
-    go(cfg.role === 'child' || cfg.role === 'parent' ? cfg.role : 'start');
+    if (cfg.setup) go('setup');
+    else go(cfg.role === 'child' || cfg.role === 'parent' ? cfg.role : 'start');
   } catch {
     renderStart(t('serverError'));
   }

@@ -31,10 +31,21 @@ public/src/*.js      browser sources -> esbuild -> public/app.js
 
 ## Environment
 
+Settings live in `DATA_DIR/settings.json` (0600) and are edited in the web UI
+(first-start wizard, admin page). Effective value = settings.json ?? ENV ??
+default; ENV is only the start value, empty ENV = unset. PINs are stored as
+scrypt hashes; ENV PINs are hashed in memory at start. Infrastructure is ENV
+only: `DATA_DIR`, `CERTS_DIR`, `PUID`, `PGID`, `TZ`, `WEBHOOK_TEST`.
+Invalid ENV values stop the start unless settings.json overrides them.
+Restart needed for: ports, `ANNOUNCED_IP`, `TLS_SOURCE`, Cert Warden and
+`TLS_CERT`/`TLS_KEY`; everything else applies live.
+
 | Variable | Default | Meaning |
 |---|---|---|
-| `PARENT_PIN` | required | PIN for parents |
-| `CHILD_PIN` | required | PIN for child devices (must differ from PARENT_PIN) |
+| `ADMIN_PIN` | empty | PIN for the admin page (settings) |
+| `PARENT_PIN` | empty | PIN for parents; missing parent or child PIN = setup mode |
+| `CHILD_PIN` | empty | PIN for child devices; all three PINs must differ |
+| `TLS_SOURCE` | `auto` | `auto`, `certwarden`, `folder` (skip Cert Warden), `selfsigned` |
 | `CHILD_NAMES` | empty | Fixed names, comma-separated; free name always possible |
 | `ALLOWED_CIDRS` | `10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,127.0.0.0/8,100.64.0.0/10,::1/128,fc00::/7,fe80::/10` | Client IPs allowed (HTTP, WS). IPv4-mapped IPv6 normalised |
 | `HOSTS` | empty | Extra host names accepted, comma-separated, `*.example.org` allowed |
@@ -77,13 +88,29 @@ and chain. Check key matches cert and not expired, store in
   must be an IP, a local name (no dot, or suffix `.local .lan .home
   .home.arpa .internal .fritz.box .ts.net`), a name of the served certificate
   (CN/SAN, wildcard) or in `HOSTS`; else 421 (DNS rebinding).
-- `POST /api/login` `{role:"parent"|"child", pin}` -> cookie `bp_session` =
-  `role.issued.hmac`, HttpOnly, Secure, SameSite=Strict, 90 days. HMAC key =
-  sha256(secret file in DATA_DIR + role PIN) so a PIN change signs out.
-  Rate limit: 5 failures / IP / 5 min -> 429. Constant-time compare.
-- `POST /api/logout` clears the cookie.
-- `GET /api/config` -> `{role|null, childNames, soundThreshold,
-  motionThreshold, heartbeatTimeout}`.
+- Setup mode (parent or child PIN missing): every page request shows the
+  wizard, no protection code. `GET /api/setup/state`, `POST /api/setup`,
+  `POST /api/setup/test-certwarden`, `POST /api/setup/test-webhook` only
+  work now; login and `/ws` answer 503. Saving ends setup and sets the
+  admin cookie.
+- `POST /api/login` `{role:"parent"|"child"|"admin", pin}` -> cookie
+  `bp_session` = `role.issued.hmac`, HttpOnly, Secure, SameSite=Strict, 90
+  days; admin gets `bp_admin` (1 h). HMAC key = sha256(secret file in
+  DATA_DIR + role PIN hash) so a PIN change signs that role out (open sockets
+  are closed). Rate limit: 5 failures / IP / 5 min -> 429 (admin too).
+  scrypt verify, constant-time compare.
+- `POST /api/logout` clears the cookie; `POST /api/admin/logout` the admin one.
+- `GET /api/config` -> `{role|null, admin, adminPin, childNames,
+  soundThreshold, motionThreshold, heartbeatTimeout}` or `{setup:true}`.
+- Admin cookie: `GET/POST /api/admin/settings` (`{values:{KEY:value}}`,
+  unknown keys and invalid values -> 400 with `errors`), `POST
+  /api/admin/test-certwarden`, `/api/admin/test-webhook`,
+  `/api/admin/restart` (answers, then exits 0). Secrets are never returned;
+  `''`/missing = unchanged, `null` = delete (not for PINs). Changing
+  `ALLOWED_CIDRS` so that the own IP is locked out is refused.
+- `POST /api/admin/claim` `{parentPin, adminPin}`: only while no admin PIN
+  exists; parent PIN verified (rate limit), admin PIN stored, admin cookie set.
+- All POSTs: same-origin check.
 - `/ws` upgrade needs a valid cookie; role comes from the cookie.
 - Security headers: CSP `default-src 'self'; media-src 'self' blob:;
   img-src 'self' data: blob:; connect-src 'self' wss:`, no-referrer,

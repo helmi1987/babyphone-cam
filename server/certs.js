@@ -82,7 +82,7 @@ export function certwardenApi(url = config.certwardenUrl) {
 }
 
 function certwardenEnabled() {
-  return Boolean(config.certwardenUrl);
+  return Boolean(config.certwardenUrl) && (config.tlsSource === 'auto' || config.tlsSource === 'certwarden');
 }
 
 function certwardenMissing() {
@@ -91,13 +91,14 @@ function certwardenMissing() {
   return names.filter((_, i) => !vals[i]);
 }
 
-async function certwardenFetch() {
-  const name = config.certName;
+// opts: {certwardenUrl, certName, certCertApi, certKeyApi}; defaults to the running config.
+export async function certwardenFetch(opts = config) {
+  const name = opts.certName;
   if (!/^[A-Za-z0-9._~-]+$/.test(name)) throw new Error(`"${name}" is not a Cert Warden name`);
   let res;
   try {
-    res = await fetch(`${certwardenApi()}/privatecertchains/${name}`, {
-      headers: { 'X-API-Key': `${config.certCertApi}.${config.certKeyApi}` },
+    res = await fetch(`${certwardenApi(opts.certwardenUrl)}/privatecertchains/${name}`, {
+      headers: { 'X-API-Key': `${opts.certCertApi}.${opts.certKeyApi}` },
       signal: AbortSignal.timeout(30000),
     });
   } catch (e) {
@@ -241,6 +242,7 @@ async function selfSigned() {
 // ---------------------------------------------------------------- selection
 
 async function choose() {
+  if (config.tlsSource === 'selfsigned') return [await selfSigned()];
   if (certwardenEnabled()) {
     const pair = pairIn(CW_DIR);
     if (pair) {

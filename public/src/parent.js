@@ -105,6 +105,8 @@ export function mountParent(root, cfg, nav) {
     updateDot();
     renderAlarms();
   });
+  const onResize = () => layout();
+  window.addEventListener('resize', onResize);
   hub.start();
 
   return { destroy };
@@ -249,9 +251,6 @@ export function mountParent(root, cfg, nav) {
     if (focus.size) focusTimer = setTimeout(updateFocus, 1000);
     layout();
   }
-
-  const onResize = () => layout();
-  window.addEventListener('resize', onResize);
 
   function wantedProducers(tile) {
     const d = tile.data;

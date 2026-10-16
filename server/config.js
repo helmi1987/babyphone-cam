@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2026 Stefan Diethelm
 
+import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { FIELD, FIELDS, fieldFromEnv, parseField } from './settings.js';
 
 const env = process.env;
 
@@ -33,26 +35,6 @@ function str(name, def = '') {
   return v === '' ? def : v;
 }
 
-function int(name, def, min, max) {
-  const raw = str(name);
-  if (raw === '') return def;
-  const n = Number(raw);
-  if (!Number.isInteger(n) || n < min || n > max) fail(`${name} must be an integer ${min}..${max}`);
-  return n;
-}
-
-function num(name, def, min, max) {
-  const raw = str(name);
-  if (raw === '') return def;
-  const n = Number(raw);
-  if (!Number.isFinite(n) || n < min || n > max) fail(`${name} must be a number ${min}..${max}`);
-  return n;
-}
-
-function list(name, def = '') {
-  return str(name, def).split(',').map((s) => s.trim()).filter(Boolean);
-}
-
 function autoIp() {
   for (const addrs of Object.values(os.networkInterfaces())) {
     for (const a of addrs || []) {
@@ -62,60 +44,145 @@ function autoIp() {
   return '127.0.0.1';
 }
 
-const DEFAULT_CIDRS = '10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,127.0.0.0/8,100.64.0.0/10,::1/128,fc00::/7,fe80::/10';
+// ---------------------------------------------------------------- infrastructure (ENV only)
 
-const parentPin = str('PARENT_PIN');
-const childPin = str('CHILD_PIN');
-if (!parentPin) fail('PARENT_PIN is required');
-if (!childPin) fail('CHILD_PIN is required');
-if (parentPin === childPin) fail('PARENT_PIN and CHILD_PIN must differ');
+const dataDir = path.resolve(str('DATA_DIR', '/data') || '/data');
+const certsDir = path.resolve(str('CERTS_DIR', '/certs') || '/certs');
+const SETTINGS_FILE = path.join(dataDir, 'settings.json');
 
-function webhooks() {
-  const out = [];
-  for (let n = 1; n <= 5; n++) {
-    const url = str(`WEBHOOK_${n}_URL`);
-    if (!url) continue;
-    const method = str(`WEBHOOK_${n}_METHOD`, 'POST').toUpperCase() || 'POST';
-    if (!['GET', 'POST', 'PUT'].includes(method)) fail(`WEBHOOK_${n}_METHOD must be GET, POST or PUT`);
-    const headers = [];
-    for (const pair of str(`WEBHOOK_${n}_HEADERS`).split('|')) {
-      const i = pair.indexOf(':');
-      if (i <= 0) continue;
-      headers.push([pair.slice(0, i).trim(), pair.slice(i + 1).trim()]);
+export const infra = Object.freeze({
+  DATA_DIR: dataDir,
+  CERTS_DIR: certsDir,
+  PUID: str('PUID'),
+  PGID: str('PGID'),
+  TZ: str('TZ'),
+});
+
+// ---------------------------------------------------------------- settings.json
+
+const PIN_HASH = /^scrypt\$\d+\$\d+\$\d+\$[A-Za-z0-9_-]+\$[A-Za-z0-9_-]+$/;
+
+function loadStored() {
+  let raw;
+  try {
+    raw = JSON.parse(fs.readFileSync(SETTINGS_FILE, 'utf8'));
+  } catch (e) {
+    if (e.code !== 'ENOENT') log(`settings: cannot read ${SETTINGS_FILE} (${e.code || e.message}), using ENV and defaults`);
+    return {};
+  }
+  const out = {};
+  for (const [key, value] of Object.entries(raw && typeof raw === 'object' ? raw : {})) {
+    const f = FIELD[key];
+    if (!f) {
+      log(`settings: ignoring unknown key ${key}`);
+      continue;
     }
-    const events = list(`WEBHOOK_${n}_EVENTS`).map((e) => e.toLowerCase());
-    out.push({ n, url, method, headers, body: env[`WEBHOOK_${n}_BODY`] || '', events: events.length ? events : null });
+    if (f.type === 'pin') {
+      if (typeof value === 'string' && PIN_HASH.test(value)) out[key] = value;
+      else log(`settings: ignoring ${key}, not a PIN hash`);
+      continue;
+    }
+    const r = parseField(f, value);
+    if (r.error) log(`settings: ignoring invalid ${key}`);
+    else out[key] = r.value;
   }
   return out;
 }
 
-const announced = str('ANNOUNCED_IP');
+let stored = loadStored();
 
-export const config = Object.freeze({
-  parentPin,
-  childPin,
-  childNames: list('CHILD_NAMES'),
-  allowedCidrs: list('ALLOWED_CIDRS', DEFAULT_CIDRS),
-  hosts: str('HOSTS').split(/[\s,]+/).map((h) => h.trim().toLowerCase().replace(/^\.+|\.+$/g, '')).filter(Boolean),
-  httpsPort: int('HTTPS_PORT', 443, 1, 65535),
-  httpPort: int('HTTP_PORT', 80, 0, 65535),
-  rtcPort: int('RTC_PORT', 40000, 1, 65535),
-  announcedIp: announced && announced.toLowerCase() !== 'auto' ? announced : autoIp(),
-  dataDir: path.resolve(str('DATA_DIR', '/data') || '/data'),
-  tlsCert: str('TLS_CERT'),
-  tlsKey: str('TLS_KEY'),
-  certsDir: path.resolve(str('CERTS_DIR', '/certs') || '/certs'),
-  certwardenUrl: str('CERTWARDEN_ENDPOINT_URL').replace(/\/+$/, ''),
-  certName: str('CERT_NAME'),
-  certCertApi: str('CERT_CERT_API'),
-  certKeyApi: str('CERT_KEY_API'),
-  certCheckDays: int('CERT_CHECK_DAY', 30, 1, 3650),
-  heartbeatTimeout: int('HEARTBEAT_TIMEOUT', 20, 15, 3600),
-  alarmDelay: int('ALARM_DELAY', 30, 0, 86400),
-  offlineTimeout: int('OFFLINE_TIMEOUT', 600, 1, 7 * 86400),
-  alarmUnackedDelay: int('ALARM_UNACKED_DELAY', 60, 0, 86400),
-  soundThreshold: num('SOUND_THRESHOLD', 25, 0, 100),
-  motionThreshold: num('MOTION_THRESHOLD', 4, 0, 100),
-  webhooks: webhooks(),
+const envValues = {};
+for (const f of FIELDS) {
+  const r = fieldFromEnv(f, env);
+  if (!r) continue;
+  // Invalid ENV is fatal unless settings.json overrides it
+  if (r.error) {
+    if (f.key in stored) continue;
+    const range = r.error.min !== undefined ? ` ${r.error.min}..${r.error.max}` : '';
+    fail(`${r.error.item || f.key} is invalid (${r.error.code}${range})`);
+  }
+  envValues[f.key] = r.value;
+}
+
+{
+  const pins = ['ADMIN_PIN', 'PARENT_PIN', 'CHILD_PIN'].filter((k) => envValues[k] && !(k in stored));
+  for (let i = 0; i < pins.length; i++) {
+    for (let j = i + 1; j < pins.length; j++) {
+      if (envValues[pins[i]] === envValues[pins[j]]) fail(`${pins[i]} and ${pins[j]} must differ`);
+    }
+  }
+}
+
+export function sourceOf(key) {
+  if (key in stored) return 'settings';
+  if (key in envValues) return 'env';
+  return 'default';
+}
+
+export function effective(key) {
+  if (key in stored) return stored[key];
+  if (key in envValues) return envValues[key];
+  return FIELD[key].def;
+}
+
+export function storedValue(key) {
+  return stored[key];
+}
+
+// Plain ENV PIN (hashed in memory by security.js).
+export function envPin(key) {
+  return envValues[key] || '';
+}
+
+// ---------------------------------------------------------------- running config
+
+export const config = {
+  dataDir,
+  certsDir,
   webhookTest: str('WEBHOOK_TEST') === '1',
-});
+};
+
+function apply(f, value) {
+  if (!f.prop) return;
+  if (f.key === 'WEBHOOKS') {
+    config.webhooks = value.map((w, i) => ({ n: i + 1, ...w }));
+  } else if (f.key === 'ANNOUNCED_IP') {
+    config.announcedIpSetting = value;
+    config.announcedIp = value && value !== 'auto' ? value : autoIp();
+  } else {
+    config[f.prop] = value;
+  }
+}
+
+const startValues = {};
+for (const f of FIELDS) {
+  if (!f.prop) continue;
+  startValues[f.key] = effective(f.key);
+  apply(f, startValues[f.key]);
+}
+
+// Restart-only fields whose stored value differs from the running one.
+export function restartPending() {
+  return FIELDS.filter((f) => f.restart && JSON.stringify(effective(f.key)) !== JSON.stringify(startValues[f.key]))
+    .map((f) => f.key);
+}
+
+function writeStored(next) {
+  fs.mkdirSync(dataDir, { recursive: true });
+  const tmp = path.join(dataDir, '.settings.json.new');
+  fs.writeFileSync(tmp, `${JSON.stringify(next, null, 2)}\n`, { mode: 0o600 });
+  fs.chmodSync(tmp, 0o600);
+  fs.renameSync(tmp, SETTINGS_FILE);
+}
+
+// Store validated changes {KEY: value}; live fields apply at once. Throws on write errors.
+export function saveSettings(changes) {
+  const next = { ...stored, ...changes };
+  writeStored(next);
+  stored = next;
+  for (const key of Object.keys(changes)) {
+    const f = FIELD[key];
+    if (!f.restart) apply(f, effective(key));
+  }
+  log(`settings: saved ${Object.keys(changes).join(', ') || 'nothing'}`);
+}
