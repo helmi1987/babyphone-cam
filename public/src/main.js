@@ -133,13 +133,32 @@ function renderPin(role) {
 
   const key = (label, onclick, cls = '') =>
     h('button', { type: 'button', class: `key ${cls}`, onclick }, label);
+  // Digits and delete act on touch down: iOS drops "click" for fast repeated taps or a
+  // slightly moving finger. The click that follows a pointerdown is ignored; keyboard
+  // activation (click without pointerdown) still works.
+  const padKey = (label, value, cls = '') => {
+    const b = h('button', { type: 'button', class: `key ${cls}` }, label);
+    let downAt = 0;
+    b.addEventListener('pointerdown', (e) => {
+      if (e.button !== 0) return;
+      e.preventDefault();
+      downAt = Date.now();
+      b.classList.add('pressed');
+      setTimeout(() => b.classList.remove('pressed'), 120);
+      press(value);
+    });
+    b.addEventListener('click', () => {
+      if (Date.now() - downAt > 1000) press(value);
+    });
+    return b;
+  };
   const okBtn = key(t('ok'), submit, 'ok');
-  const delBtn = key('⌫', () => press('del'), 'fn');
+  const delBtn = padKey('⌫', 'del', 'fn');
   delBtn.setAttribute('aria-label', t('del'));
   const pad = h('div', { class: 'pinpad' },
-    ['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((d) => key(d, () => press(d))),
+    ['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((d) => padKey(d, d)),
     delBtn,
-    key('0', () => press('0')),
+    padKey('0', '0'),
     okBtn);
 
   const onKey = (e) => {
