@@ -400,12 +400,17 @@ export function mountChild(root, cfg, nav) {
 
   async function requestWakeLock() {
     const r = run;
-    if (!r || !navigator.wakeLock || document.visibilityState !== 'visible') return;
+    if (!r || r.wakePending || !navigator.wakeLock || document.visibilityState !== 'visible') return;
     if (r.wakeLock && !r.wakeLock.released) return;
+    r.wakePending = true;
     try {
-      r.wakeLock = await navigator.wakeLock.request('screen');
+      const lock = await navigator.wakeLock.request('screen');
+      if (run !== r) lock.release().catch(() => {});
+      else r.wakeLock = lock;
     } catch (e) {
       console.warn('wake lock', e);
+    } finally {
+      r.wakePending = false;
     }
   }
 

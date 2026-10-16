@@ -29,6 +29,8 @@ export function mountParent(root, cfg, nav) {
   let talk = null;
   let localAcked = false;
   let destroyed = false;
+  let wakeLock = null;
+  let wakePending = false;
 
   const dot = h('span', { class: 'dot' });
   const soundHint = h('button', {
@@ -107,6 +109,11 @@ export function mountParent(root, cfg, nav) {
   });
   const onResize = () => layout();
   window.addEventListener('resize', onResize);
+  // Keep the screen on: a locked or sleeping parent device stops sound and alarms.
+  // The browser drops the lock when the page is hidden, so take it again on return.
+  const onVisibility = () => requestWakeLock();
+  document.addEventListener('visibilitychange', onVisibility);
+  requestWakeLock();
   hub.start();
 
   return { destroy };
@@ -653,6 +660,21 @@ export function mountParent(root, cfg, nav) {
 
   // ---------- lifecycle ----------
 
+  async function requestWakeLock() {
+    if (destroyed || wakePending || !navigator.wakeLock || document.visibilityState !== 'visible') return;
+    if (wakeLock && !wakeLock.released) return;
+    wakePending = true;
+    try {
+      const lock = await navigator.wakeLock.request('screen');
+      if (destroyed) lock.release().catch(() => {});
+      else wakeLock = lock;
+    } catch (e) {
+      console.warn('wake lock', e);
+    } finally {
+      wakePending = false;
+    }
+  }
+
   async function logout() {
     if (hub.connected) await hub.request('leave').catch(() => {});
     destroy();
@@ -671,6 +693,9 @@ export function mountParent(root, cfg, nav) {
     clearTimeout(focusTimer);
     document.removeEventListener('keydown', onKey);
     window.removeEventListener('resize', onResize);
+    document.removeEventListener('visibilitychange', onVisibility);
+    wakeLock?.release().catch(() => {});
+    wakeLock = null;
     ctx?.removeEventListener('statechange', updateSoundHint);
     banners.remove();
     document.body.classList.remove('has-enlarged');
