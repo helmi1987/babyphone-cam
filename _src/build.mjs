@@ -8,6 +8,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 
 const SRC = path.dirname(fileURLToPath(import.meta.url));
@@ -310,9 +311,21 @@ ${t.donate.items.map((w) => `          <li><a class="card wish" href="${PAYPAL}$
 `;
 }
 
+// Cache busting: append a content hash to every local asset URL, so browsers
+// fetch changed CSS/JS/images at once despite the long max-age in .htaccess.
+const hashes = new Map();
+function versioned(html) {
+  return html.replace(/(["'])\.\.\/(assets\/[^"'?#]+)\1/g, (m, q, rel) => {
+    if (!hashes.has(rel)) {
+      hashes.set(rel, crypto.createHash('sha256').update(fs.readFileSync(path.join(ROOT, rel))).digest('hex').slice(0, 10));
+    }
+    return `${q}../${rel}?v=${hashes.get(rel)}${q}`;
+  });
+}
+
 for (const lang of LANGS) {
   fs.mkdirSync(path.join(ROOT, lang), { recursive: true });
-  fs.writeFileSync(path.join(ROOT, lang, 'index.html'), page(lang));
+  fs.writeFileSync(path.join(ROOT, lang, 'index.html'), versioned(page(lang)));
 }
 
 // sitemap.xml with hreflang alternates

@@ -52,6 +52,9 @@ node _src/build.mjs
 and commit the regenerated `*/index.html` and `sitemap.xml` (the server does
 not build anything).
 
+Local asset URLs get `?v=<content hash>` at build time, so changed CSS, JS
+and images load at once despite the long cache times in `.htaccess`.
+
 Screenshots were taken from the real app with test PINs; the children in the
 camera images are SVG illustrations (`assets/img/baby.svg`,
 `assets/img/toddler.svg`) used as fake camera input.
