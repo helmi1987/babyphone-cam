@@ -7,10 +7,11 @@ import { h, load, save, deviceId, mediaAvailable, errMsg } from './dom.js';
 import { t, clock } from './i18n.js';
 import { Hub } from './api.js';
 import { Media } from './media.js';
-import { getAudioContext, AlarmTone } from './alarm.js';
+import { getAudioContext, AlarmTone, setAudioSession } from './alarm.js';
 
 export function mountParent(root, cfg, nav) {
   const myId = deviceId('bp.parentId');
+  setAudioSession('playback');
   const ctx = getAudioContext();
   const hub = new Hub();
   const media = new Media(hub);
@@ -584,6 +585,7 @@ export function mountParent(root, cfg, nav) {
     tile.talkBtn.textContent = t('talking');
     toast.textContent = '';
     try {
+      setAudioSession('play-and-record');
       s.stream = await navigator.mediaDevices.getUserMedia({
         audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
       });
@@ -623,6 +625,7 @@ export function mountParent(root, cfg, nav) {
     s.transport = null;
     s.stream?.getTracks().forEach((tr) => tr.stop());
     s.stream = null;
+    if (!destroyed) setAudioSession('playback');
   }
 
   // ---------- alarms ----------
@@ -689,6 +692,7 @@ export function mountParent(root, cfg, nav) {
     resetMedia();
     for (const tile of [...tiles.values()]) removeTile(tile);
     tone.set(false);
+    setAudioSession('auto');
     clearInterval(clockTimer);
     clearTimeout(focusTimer);
     document.removeEventListener('keydown', onKey);
