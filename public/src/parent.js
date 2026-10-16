@@ -110,6 +110,7 @@ export function mountParent(root, cfg, nav) {
   });
   const onResize = () => layout();
   window.addEventListener('resize', onResize);
+  setupMediaSession();
   // Keep the screen on: a locked or sleeping parent device stops sound and alarms.
   // The browser drops the lock when the page is hidden, so take it again on return.
   const onVisibility = () => requestWakeLock();
@@ -188,6 +189,70 @@ export function mountParent(root, cfg, nav) {
     }
     empty.hidden = tiles.size > 0;
     updateFocus();
+    updateMediaSession();
+  }
+
+  // Lock screen / Dynamic Island "Now Playing": app name, children, icon. Pause, stop,
+  // skip and seek do nothing, so the monitor cannot be silenced there by accident.
+  function setupMediaSession() {
+    const ms = navigator.mediaSession;
+    if (!ms) return;
+    for (const action of ['play', 'pause', 'stop']) {
+      try {
+        ms.setActionHandler(action, () => {
+          ctx?.resume().catch(() => {});
+          ms.playbackState = 'playing';
+        });
+      } catch {
+        // action not supported
+      }
+    }
+    for (const action of ['previoustrack', 'nexttrack', 'seekbackward', 'seekforward', 'seekto']) {
+      try {
+        ms.setActionHandler(action, null);
+      } catch {
+        // action not supported
+      }
+    }
+    ms.playbackState = 'playing';
+    updateMediaSession();
+  }
+
+  function updateMediaSession() {
+    const ms = navigator.mediaSession;
+    if (!ms || destroyed || typeof MediaMetadata !== 'function') return;
+    const all = [...tiles.values()].map((tl) => tl.data || {});
+    const online = all.filter((d) => d.online);
+    const artist = all.length
+      ? `${all.map((d) => d.name || '?').join(', ')} · ${online.length} ${t('online')}`
+      : t('noChildren');
+    if (ms.metadata && ms.metadata.title === t('appTitle') && ms.metadata.artist === artist) return;
+    try {
+      ms.metadata = new MediaMetadata({
+        title: t('appTitle'),
+        artist,
+        artwork: [
+          { src: '/icon-192.png', sizes: '192x192', type: 'image/png' },
+          { src: '/icon-512.png', sizes: '512x512', type: 'image/png' },
+        ],
+      });
+    } catch (e) {
+      console.warn('media session', e);
+    }
+  }
+
+  function clearMediaSession() {
+    const ms = navigator.mediaSession;
+    if (!ms) return;
+    for (const action of ['play', 'pause', 'stop']) {
+      try {
+        ms.setActionHandler(action, null);
+      } catch {
+        // action not supported
+      }
+    }
+    ms.metadata = null;
+    ms.playbackState = 'none';
   }
 
   // Use the whole screen: pick the column count that gives each picture the
@@ -693,6 +758,7 @@ export function mountParent(root, cfg, nav) {
     for (const tile of [...tiles.values()]) removeTile(tile);
     tone.set(false);
     setAudioSession('auto');
+    clearMediaSession();
     clearInterval(clockTimer);
     clearTimeout(focusTimer);
     document.removeEventListener('keydown', onKey);
