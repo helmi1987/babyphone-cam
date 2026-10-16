@@ -100,10 +100,10 @@ export function mountChild(root, cfg, nav) {
         h('div', { class: 'segmented' },
           modeBtn('cam', t('modeCam'), t('modeCamHint')),
           modeBtn('phone', t('modePhone'), t('modePhoneHint'))),
-        prefs.mode === 'cam'
+        ...(prefs.mode === 'cam'
           ? [h('h2', null, t('camera')), h('div', { class: 'segmented' },
             facingBtn('user', t('front')), facingBtn('environment', t('rear')))]
-          : null,
+          : []),
       );
     };
     renderModes();
