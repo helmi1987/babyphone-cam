@@ -21,6 +21,8 @@ const STEPS = [
 // mode 'setup': no login, /api/setup. mode 'admin': admin cookie, /api/admin.
 export function mountWizard(app, { mode, nav }) {
   const setup = mode === 'setup';
+  // First start over plain HTTP: the server only allows the wizard here
+  const plainHttp = setup && location.protocol === 'http:';
   const api = setup ? '/api/setup' : '/api/admin';
   const stateUrl = setup ? '/api/setup/state' : '/api/admin/settings';
   const saveUrl = setup ? '/api/setup' : '/api/admin/settings';
@@ -81,6 +83,7 @@ export function mountWizard(app, { mode, nav }) {
       h('header', { class: 'bar' },
         h('h1', null, setup ? t('w_title') : t('wizardAgain')),
         setup ? null : h('button', { type: 'button', class: 'ghost small', onclick: () => nav.go('admin') }, t('close'))),
+      plainHttp ? h('p', { class: 'warn insecure-hint' }, t('w_insecure')) : null,
       h('p', { class: 'muted step-count' }, t('step', { n: step + 1, total: STEPS.length })),
       h('ol', { class: 'steps' }, STEPS.map((x, i) => h('li', { class: i === step ? 'current' : i < step ? 'done' : '' }, t(`w_${x.id}`)))),
       h('h2', { class: 'step-title' }, t(`w_${s.id}`)),
@@ -126,7 +129,22 @@ export function mountWizard(app, { mode, nav }) {
     done(r.data);
   }
 
+  // Setup over HTTP ends on HTTPS; the server restarts itself first when TLS settings changed.
+  function toHttps(result) {
+    const port = Number(result?.httpsPort) || 443;
+    const url = `https://${location.hostname}${port === 443 ? '' : `:${port}`}/`;
+    root.replaceChildren(
+      h('h1', null, t('saved')),
+      h('p', null, t('setupDone')),
+      h('p', { class: 'muted' }, t(result?.restarting ? 'w_toHttpsRestart' : 'w_toHttps')),
+      h('p', null, h('a', { href: url }, url)),
+      h('div', { class: 'wiz-nav' },
+        h('button', { type: 'button', class: 'primary', onclick: () => { location.href = url; } }, t('w_toHttpsLink'))));
+    setTimeout(() => { location.href = url; }, result?.restarting ? 6000 : 1500);
+  }
+
   function done(result) {
+    if (plainHttp) return toHttps(result);
     const pending = result?.restartPending || [];
     root.replaceChildren(
       h('h1', null, t('saved')),

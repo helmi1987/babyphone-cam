@@ -21,8 +21,8 @@ Design: [docs/CONCEPT.md](docs/CONCEPT.md).
 1. New stack, paste [compose/compose.yaml](compose/compose.yaml); `.env` tab
    from [compose/.env.example](compose/.env.example).
 2. Set at least `BABYPHONE_IP` (and `CERTS_DIR` for HTTPS option A).
-3. Start. Open `https://<name or IP>/`; the first-start wizard asks for the
-   rest.
+3. Start. Open `http://<IP>/` (or `https://<name or IP>/`); the first-start
+   wizard asks for the rest and then switches to HTTPS.
 
 The image is built by GitHub Actions: `ghcr.io/helmi1987/babyphone-cam`
 (`latest` = main, version tags, branch names). If the package is private, make
@@ -38,6 +38,11 @@ Everything except infrastructure is set in the browser:
   a wizard (welcome, PINs, child names, HTTPS, alarms and detection,
   webhooks, summary). Parent and child pages stay closed until it is saved.
   There is no extra protection code: run the first start in a trusted network.
+  Before a trusted certificate exists the wizard also works over plain
+  `http://<IP>/` (only the wizard; the page shows "Unverschlüsselte
+  Verbindung"). The PINs then travel unencrypted through the LAN. After
+  saving, the page switches to HTTPS (the server restarts first when the
+  certificate source changed) and HTTP only redirects to HTTPS.
 - **Later:** start page → **Einstellungen** → admin PIN. All settings grouped
   like the wizard plus network (without an admin PIN yet: "Admin-PIN
   festlegen" with the parent PIN); each shows where its value comes from (web UI,
@@ -71,7 +76,7 @@ Without either, a self-signed certificate is used (browser warning).
 | Port | Use |
 |---|---|
 | 443/tcp | Web page, WebSocket |
-| 80/tcp | Redirect to HTTPS |
+| 80/tcp | Redirect to HTTPS; first-start wizard only while setup is open |
 | 40000/udp + tcp | Media (`RTC_PORT`) |
 
 Over WireGuard the VPN subnet must be routed to the LAN.

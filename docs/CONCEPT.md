@@ -52,7 +52,7 @@ Restart needed for: ports, `ANNOUNCED_IP`, `TLS_SOURCE`, Cert Warden and
 | `ALLOWED_CIDRS` | `10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,127.0.0.0/8,100.64.0.0/10,::1/128,fc00::/7,fe80::/10` | Client IPs allowed (HTTP, WS). IPv4-mapped IPv6 normalised |
 | `HOSTS` | empty | Extra host names accepted, comma-separated, `*.example.org` allowed |
 | `HTTPS_PORT` | `443` | |
-| `HTTP_PORT` | `80` | Redirect to HTTPS; `0` = off |
+| `HTTP_PORT` | `80` | Redirect to HTTPS (setup mode: wizard over HTTP); `0` = off |
 | `RTC_PORT` | `40000` | mediasoup WebRtcServer, UDP and TCP |
 | `ANNOUNCED_IP` | auto | IP given to browsers for media; auto = first non-internal IPv4 of the container |
 | `DATA_DIR` | `/data` | Cookie secret, CertWarden cache |
@@ -95,6 +95,18 @@ and chain. Check key matches cert and not expired, store in
   `POST /api/setup/test-certwarden`, `POST /api/setup/test-webhook` only
   work now; login and `/ws` answer 503. Saving ends setup and sets the
   admin cookie.
+- Plain HTTP (`HTTP_PORT`, and plaintext that arrives on `HTTPS_PORT`: the
+  port is a TCP listener that sends a first byte 0x16 to TLS and anything
+  else to the HTTP handler; silent connections close after 10 s): in setup
+  mode it serves the static files, `/api/config` and `/api/setup*` (same IP
+  and host checks, same-origin with `http:` origin); other API paths answer
+  403, `/ws` 403. During this first setup the PINs travel unencrypted in the
+  LAN. `POST /api/setup` over HTTP sets no cookie and returns `httpsPort` and
+  `restarting`; when TLS settings need a restart the server exits 0 after the
+  answer (restart policy). The page waits (1.5 s, or 6 s on restart) and goes
+  to `https://<host>[:port]/`. Outside setup mode (checked per request) every
+  HTTP request gets 301 to `https://<host>[:HTTPS_PORT]<path>`.
+- HTTPS same-origin checks require an `https:` origin.
 - `POST /api/login` `{role:"parent"|"child"|"admin", pin}` -> cookie
   `bp_session` = `role.issued.hmac`, HttpOnly, Secure, SameSite=Strict, 90
   days; admin gets `bp_admin` (1 h). HMAC key = sha256(secret file in

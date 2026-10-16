@@ -4,10 +4,11 @@
 import fs from 'node:fs';
 import http from 'node:http';
 import https from 'node:https';
+import net from 'node:net';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { WebSocketServer } from 'ws';
-import { config, log, restartPending, saveSettings } from './config.js';
+import { config, effective, log, restartPending, saveSettings } from './config.js';
 import { buildChanges, settingsState, testCertwarden, testWebhookInput } from './admin.js';
 import { CertManager } from './certs.js';
 import { Media } from './media.js';
@@ -65,11 +66,16 @@ function sendJson(res, status, obj, headers = {}) {
   send(res, status, JSON.stringify(obj), { 'Content-Type': 'application/json; charset=utf-8', ...headers });
 }
 
+// Plain HTTP request (HTTP_PORT, or plaintext that arrived on the HTTPS port)
+const isPlain = (req) => !req.socket.encrypted;
+
 function sameOrigin(req) {
   const origin = req.headers.origin;
   if (!origin) return true;
   try {
-    return new URL(origin).host.toLowerCase() === String(req.headers.host || '').toLowerCase();
+    const u = new URL(origin);
+    return u.protocol === (isPlain(req) ? 'http:' : 'https:')
+      && u.host.toLowerCase() === String(req.headers.host || '').toLowerCase();
   } catch {
     return false;
   }
@@ -162,10 +168,23 @@ async function saveInput(req, res, ip, setup) {
   }
   kickRoles(r.pinRoles.filter((role) => role !== 'admin'));
   const headers = {};
-  // Setup ends signed in as admin; an admin changing the admin PIN stays signed in
-  if (setup || r.pinRoles.includes('admin')) headers['Set-Cookie'] = adminCookie(makeSession('admin'));
-  log(`settings: ${setup ? 'setup finished' : 'changed by admin'} from ${ip}`);
-  return sendJson(res, 200, { ok: true, changed: Object.keys(r.changes), restartPending: restartPending() }, headers);
+  const plain = isPlain(req);
+  // Setup ends signed in as admin; an admin changing the admin PIN stays signed in.
+  // Over plain HTTP no session cookie is issued (it would travel unencrypted).
+  if (!plain && (setup || r.pinRoles.includes('admin'))) headers['Set-Cookie'] = adminCookie(makeSession('admin'));
+  log(`settings: ${setup ? 'setup finished' : 'changed by admin'} from ${ip}${plain ? ' (plain http)' : ''}`);
+  const pending = restartPending();
+  const out = { ok: true, changed: Object.keys(r.changes), restartPending: pending };
+  if (plain) {
+    // The browser continues on HTTPS; restart first if TLS settings changed.
+    out.httpsPort = effective('HTTPS_PORT');
+    out.restarting = pending.length > 0;
+    if (out.restarting) {
+      log('setup: restarting to apply TLS settings');
+      res.on('finish', () => setTimeout(() => shutdown('restart'), 200));
+    }
+  }
+  return sendJson(res, 200, out, headers);
 }
 
 async function runTest(req, res, fn) {
@@ -336,18 +355,25 @@ function guard(req, res) {
   return ip;
 }
 
+// API endpoints the first-start wizard needs; only these work over plain HTTP.
+const setupApiPath = (p) => p === '/api/config' || p === '/api/setup' || p.startsWith('/api/setup/');
+
 async function onRequest(req, res) {
   for (const [k, v] of Object.entries(SECURITY_HEADERS)) res.setHeader(k, v);
   const ip = guard(req, res);
   if (!ip) return;
+  // Plain HTTP: only the wizard while in setup mode, otherwise redirect to HTTPS
+  if (isPlain(req) && !setupMode()) return redirectToHttps(req, res);
   let pathname;
   try {
     pathname = new URL(req.url, 'https://x').pathname;
   } catch {
     return send(res, 400, 'Bad Request');
   }
+  const isApi = pathname === '/api' || pathname.startsWith('/api/');
+  if (isPlain(req) && isApi && !setupApiPath(pathname)) return sendJson(res, 403, { error: 'https required' });
   try {
-    if (pathname === '/api' || pathname.startsWith('/api/')) return await api(req, res, pathname, ip);
+    if (isApi) return await api(req, res, pathname, ip);
     return await serveStatic(req, res, pathname);
   } catch (e) {
     log(`http: ${req.method} ${pathname} failed: ${e.message}`);
@@ -356,9 +382,7 @@ async function onRequest(req, res) {
   }
 }
 
-function onRedirect(req, res) {
-  const ip = guard(req, res);
-  if (!ip) return;
+function redirectToHttps(req, res) {
   let host = hostWithoutPort(req.headers.host);
   if (!host) return send(res, 400, 'Bad Request');
   if (host.includes(':')) host = `[${host}]`;
@@ -369,6 +393,12 @@ function onRedirect(req, res) {
 
 function rejectUpgrade(socket, status, text) {
   socket.end(`HTTP/1.1 ${status} ${text}\r\nConnection: close\r\nContent-Length: 0\r\n\r\n`);
+}
+
+// No WebSocket over plain HTTP
+function onPlainUpgrade(req, socket) {
+  socket.on('error', () => {});
+  rejectUpgrade(socket, 403, 'Forbidden');
 }
 
 function onUpgrade(req, socket, head) {
@@ -406,9 +436,40 @@ async function main() {
   server.on('upgrade', onUpgrade);
   server.on('tlsClientError', () => {});
   certs.attach(server);
+
+  // Plain HTTP handler: wizard in setup mode, otherwise redirect to HTTPS.
+  // Serves HTTP_PORT and plaintext requests that arrive on the HTTPS port.
+  const plain = http.createServer(onRequest);
+  plain.headersTimeout = 15000;
+  plain.requestTimeout = 30000;
+  plain.on('upgrade', onPlainUpgrade);
+  plain.on('clientError', (e, socket) => socket.destroy());
+
+  // The HTTPS port is owned by a raw TCP listener that looks at the first byte:
+  // 0x16 (TLS handshake record) goes to the HTTPS server, anything else to the
+  // plain handler, so "http://host:443" gets a redirect instead of TLS bytes.
+  // The inner servers never listen themselves; 'listening' is emitted once so
+  // they start their connection tracking (headersTimeout/requestTimeout checks).
+  server.emit('listening');
+  plain.emit('listening');
+  const pending = new Set();
+  const front = net.createServer({ noDelay: true }, (socket) => {
+    pending.add(socket);
+    socket.on('error', () => {});
+    socket.setTimeout(10000, () => socket.destroy());
+    socket.once('close', () => pending.delete(socket));
+    socket.once('data', (buf) => {
+      pending.delete(socket);
+      socket.setTimeout(0);
+      socket.pause();
+      socket.unshift(buf);
+      (buf[0] === 0x16 ? server : plain).emit('connection', socket);
+      process.nextTick(() => socket.resume());
+    });
+  });
   await new Promise((resolve, reject) => {
-    server.once('error', reject);
-    server.listen(config.httpsPort, () => resolve());
+    front.once('error', reject);
+    front.listen(config.httpsPort, () => resolve());
   });
   log(`https: listening on ${config.httpsPort}`);
   log(`access: allowed networks ${config.allowedCidrs.join(', ')}`);
@@ -417,9 +478,9 @@ async function main() {
 
   let redirect = null;
   if (config.httpPort > 0) {
-    redirect = http.createServer(onRedirect);
-    redirect.on('error', (e) => log(`http: redirect server error: ${e.code || e.message}`));
-    redirect.listen(config.httpPort, () => log(`http: redirect on ${config.httpPort}`));
+    redirect = net.createServer({ noDelay: true }, (socket) => plain.emit('connection', socket));
+    redirect.on('error', (e) => log(`http: server error: ${e.code || e.message}`));
+    redirect.listen(config.httpPort, () => log(`http: listening on ${config.httpPort} (setup wizard, otherwise redirect)`));
   }
 
   webhookStartup();
@@ -433,12 +494,16 @@ async function main() {
     wss.close();
     certs.stop();
     redirect?.close();
-    server.close(() => {
+    front.close(() => {
       media.close();
       log('stopped');
       process.exit(0);
     });
-    server.closeAllConnections();
+    for (const s of [server, plain]) {
+      s.close(() => {}); // stops connection tracking; the port belongs to front
+      s.closeAllConnections();
+    }
+    for (const socket of pending) socket.destroy();
     setTimeout(() => {
       media.close();
       process.exit(0);
