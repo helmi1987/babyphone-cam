@@ -103,7 +103,7 @@
       { "q": "Funktioniert es von unterwegs?", "a": "Nur über ein VPN wie WireGuard, das ins Heimnetz geroutet ist. Es gibt bewusst keinen Cloud-Zugang." },
       { "q": "Wird etwas gespeichert oder aufgezeichnet?", "a": "Nein. Bild und Ton werden nur live weitergeleitet. Gespeichert werden Einstellungen, PINs nur als Hash." },
       { "q": "Worauf muss ich beim Kindgerät achten?", "a": "Die Seite im Vordergrund lassen, den Bildschirm nicht sperren und das Gerät ans Ladegerät hängen. Sperren oder App-Wechsel stoppt Kamera und Mikrofon (iOS, Android). LCD-Bildschirme bleiben beleuchtet, nur OLED wird wirklich dunkel." },
-      { "q": "Auf welchen Geräten wurde es getestet?", "a": "Die App ist für aktuelle Browser (Chrome, Firefox, Safari, Edge) ausgelegt. Auf einem echten iPhone (Safari) getestet. Android: keine Probleme bekannt." },
+      { "q": "Auf welchen Geräten wurde es getestet?", "a": "Die App ist für aktuelle Browser (Chrome, Firefox, Safari, Edge) ausgelegt. Getestet auf echten Geräten mit iOS (Safari und als App auf dem Home-Bildschirm) und Android." },
       { "q": "In welchen Sprachen gibt es die App?", "a": "Deutsch, Englisch, Italienisch und Französisch. Einstellbar im Einrichtungsassistenten oder unter Einstellungen; «Automatisch» nimmt die Browsersprache, sonst Englisch." },
       { "q": "Was kostet es?", "a": "Nichts. babyphone-cam ist Open Source unter der Lizenz AGPL-3.0." }
     ],
@@ -216,7 +216,7 @@
       { "q": "Does it work when I'm away?", "a": "Only through a VPN such as WireGuard that is routed into your home network. There is deliberately no cloud access." },
       { "q": "Is anything stored or recorded?", "a": "No. Video and sound are only forwarded live. Settings are stored, PINs only as hashes." },
       { "q": "What should I watch out for on the child device?", "a": "Keep the page in the foreground, the screen unlocked and the device on power. Locking or switching apps stops camera and microphone (iOS, Android). LCD screens keep their backlight; only OLED goes truly dark." },
-      { "q": "Which devices has it been tested on?", "a": "The app is designed for current browsers (Chrome, Firefox, Safari, Edge). Tested on a real iPhone (Safari). Android: no known issues." },
+      { "q": "Which devices has it been tested on?", "a": "The app is designed for current browsers (Chrome, Firefox, Safari, Edge). Tested on real iOS devices (Safari and as a Home Screen app) and Android devices." },
       { "q": "Which languages does the app support?", "a": "German, English, Italian and French. Set it in the setup wizard or under Settings; “Automatic” uses the browser language, otherwise English." },
       { "q": "What does it cost?", "a": "Nothing. babyphone-cam is open source under the AGPL-3.0 licence." }
     ],
@@ -329,7 +329,7 @@
       { "q": "Funziona anche fuori casa?", "a": "Solo tramite una VPN come WireGuard instradata nella rete di casa. Non esiste volutamente un accesso cloud." },
       { "q": "Viene salvato o registrato qualcosa?", "a": "No. Video e audio vengono solo inoltrati in diretta. Vengono salvate le impostazioni, i PIN solo come hash." },
       { "q": "A cosa fare attenzione sul dispositivo del bambino?", "a": "Tenere la pagina in primo piano, lo schermo sbloccato e il dispositivo collegato alla corrente. Bloccare lo schermo o cambiare app ferma camera e microfono (iOS, Android). Gli schermi LCD restano retroilluminati, solo gli OLED diventano davvero neri." },
-      { "q": "Su quali dispositivi è stato testato?", "a": "L'app è pensata per browser attuali (Chrome, Firefox, Safari, Edge). Testata su un vero iPhone (Safari). Android: nessun problema noto." },
+      { "q": "Su quali dispositivi è stato testato?", "a": "L'app è pensata per browser attuali (Chrome, Firefox, Safari, Edge). Testata su veri dispositivi iOS (Safari e come app nella schermata Home) e Android." },
       { "q": "In quali lingue è disponibile l'app?", "a": "Tedesco, inglese, italiano e francese. Si imposta nella procedura guidata o nelle impostazioni; «Automatica» usa la lingua del browser, altrimenti l'inglese." },
       { "q": "Quanto costa?", "a": "Niente. babyphone-cam è open source con licenza AGPL-3.0." }
     ],
@@ -442,7 +442,7 @@
       { "q": "Est-ce que ça marche hors de la maison ?", "a": "Uniquement via un VPN comme WireGuard routé vers le réseau domestique. Il n'y a volontairement aucun accès cloud." },
       { "q": "Quelque chose est-il stocké ou enregistré ?", "a": "Non. La vidéo et le son ne sont relayés qu'en direct. Seuls les réglages sont stockés, les PIN uniquement sous forme de hash." },
       { "q": "À quoi faut-il faire attention sur l'appareil enfant ?", "a": "Garder la page au premier plan, l'écran déverrouillé et l'appareil branché. Verrouiller ou changer d'app arrête caméra et micro (iOS, Android). Les écrans LCD restent rétroéclairés, seuls les OLED deviennent vraiment noirs." },
-      { "q": "Sur quels appareils a-t-il été testé ?", "a": "L'app est conçue pour les navigateurs actuels (Chrome, Firefox, Safari, Edge). Testée sur un vrai iPhone (Safari). Android : aucun problème connu." },
+      { "q": "Sur quels appareils a-t-il été testé ?", "a": "L'app est conçue pour les navigateurs actuels (Chrome, Firefox, Safari, Edge). Testée sur de vrais appareils iOS (Safari et comme app sur l’écran d’accueil) et Android." },
       { "q": "Dans quelles langues l'app est-elle disponible ?", "a": "Allemand, anglais, italien et français. Réglable dans l'assistant de configuration ou dans les paramètres ; « Automatique » utilise la langue du navigateur, sinon l'anglais." },
       { "q": "Combien ça coûte ?", "a": "Rien. babyphone-cam est open source sous licence AGPL-3.0." }
     ],
