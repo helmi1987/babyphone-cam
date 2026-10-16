@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>babyphone-cam – babyphone dans le navigateur, sans cloud</title>
+  <meta name="description" content="Babyphone open source pour votre réseau domestique : caméra et micro dans le navigateur, un seul conteneur Docker, sans compte, sans app, sans cloud. Rien n'est enregistré.">
+  <link rel="canonical" href="https://babyphone.helminet.ch/fr/">
+  <link rel="alternate" hreflang="de" href="https://babyphone.helminet.ch/de/">
+  <link rel="alternate" hreflang="en" href="https://babyphone.helminet.ch/en/">
+  <link rel="alternate" hreflang="it" href="https://babyphone.helminet.ch/it/">
+  <link rel="alternate" hreflang="fr" href="https://babyphone.helminet.ch/fr/">
+  <link rel="alternate" hreflang="x-default" href="https://babyphone.helminet.ch/en/">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#121735">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="babyphone-cam">
+  <meta property="og:title" content="babyphone-cam – babyphone dans le navigateur, sans cloud">
+  <meta property="og:description" content="Babyphone open source pour votre réseau domestique : caméra et micro dans le navigateur, un seul conteneur Docker, sans compte, sans app, sans cloud. Rien n'est enregistré.">
+  <meta property="og:url" content="https://babyphone.helminet.ch/fr/">
+  <meta property="og:locale" content="fr_CH">
+  <meta property="og:locale:alternate" content="de_CH">
+  <meta property="og:locale:alternate" content="en_US">
+  <meta property="og:locale:alternate" content="it_CH">
+  <meta property="og:image" content="https://babyphone.helminet.ch/assets/img/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="babyphone-cam">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="../favicon.ico" sizes="any">
+  <link rel="icon" href="../assets/img/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="../assets/img/apple-touch-icon.png">
+  <link rel="stylesheet" href="../assets/css/site.css">
+  <script src="../assets/js/site.js" defer></script>
+</head>
+<body>
+  <a class="skip" href="#main">Aller au contenu</a>
+  <header class="site-header">
+    <div class="wrap header-row">
+      <a class="brand" href="./"><img src="../assets/img/icon.svg" width="36" height="36" alt=""><span>babyphone-cam</span></a>
+      <nav class="main-nav" aria-label="babyphone-cam">
+        <ul><li><a href="#features">Fonctions</a></li><li><a href="#how">Fonctionnement</a></li><li><a href="#screens">Images</a></li><li><a href="#privacy">Confidentialité</a></li><li><a href="#install">Installation</a></li><li><a href="#faq">FAQ</a></li></ul>
+      </nav>
+      <nav class="lang" aria-label="Langue">
+        <ul><li><a href="../de/" hreflang="de" lang="de">DE<span class="sr-only"> – Deutsch</span></a></li><li><a href="../en/" hreflang="en" lang="en">EN<span class="sr-only"> – English</span></a></li><li><a href="../it/" hreflang="it" lang="it">IT<span class="sr-only"> – Italiano</span></a></li><li><a href="../fr/" hreflang="fr" lang="fr" aria-current="page">FR<span class="sr-only"> – Français</span></a></li></ul>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="stars" aria-hidden="true"></div>
+      <div class="wrap hero-grid">
+        <div class="hero-text">
+          <h1 id="hero-title"><img class="hero-logo" src="../assets/img/icon.svg" width="72" height="72" alt="">babyphone-cam</h1>
+          <p class="claim">Le babyphone qui reste dans votre réseau domestique.</p>
+          <p class="sub">Un ancien téléphone ou une tablette devient la caméra près de l'enfant, n'importe quel autre appareil devient l'unité parents. Tout fonctionne dans le navigateur via votre propre conteneur Docker – sans app, sans compte, sans cloud.</p>
+          <p class="cta">
+            <a class="btn btn-primary" href="#install">Installer</a>
+            <a class="btn btn-ghost" href="https://github.com/helmi1987/babyphone-cam" rel="noopener">Voir sur GitHub</a>
+          </p>
+          <ul class="badges"><li>Open source (AGPL-3.0)</li><li>LAN ou VPN WireGuard</li><li>Aucun enregistrement</li></ul>
+        </div>
+        <div class="hero-shot">
+          <img src="../assets/img/shots/parent-en.webp" width="1280" height="800" alt="Vue parents avec trois enfants : Mia avec un cadre vert lors d'un bruit, Leo et Noah calmes. Les enfants sont des illustrations." fetchpriority="high">
+        </div>
+      </div>
+      <svg class="hero-waves" viewBox="0 0 1440 80" preserveAspectRatio="none" aria-hidden="true" focusable="false"><path d="M0 40c120-30 240-30 360 0s240 30 360 0 240-30 360 0 240 30 360 0v40H0z"/></svg>
+    </section>
+
+    <section id="features" class="section" aria-labelledby="features-title">
+      <div class="wrap">
+        <h2 id="features-title">Fonctions</h2>
+        <p class="lead">Tout ce dont un babyphone a besoin au quotidien – directement dans le navigateur.</p>
+        <ul class="features">
+          <li class="card"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="7" height="13" rx="1.5"/><rect x="14" y="7" width="7" height="13" rx="1.5"/><path d="M6.5 14h0M17.5 17h0"/></svg><h3>Appareil enfant et appareil parents</h3><p>Chaque appareil choisit son rôle : enfant ou parents, chacun avec son propre PIN. Les réglages sont protégés par un PIN admin séparé.</p></li>
+          <li class="card"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="13" height="12" rx="2"/><path d="M15.5 10.5 21 7.5v9l-5.5-3"/></svg><h3>Caméra ou téléphone</h3><p>Mode « Camera » (vidéo et son) ou « Phone » (son uniquement). Nom choisi dans une liste ou libre. Caméra avant ou arrière, commutable aussi depuis l'appareil parents.</p></li>
+          <li class="card"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg><h3>Écran sombre</h3><p>L'appareil enfant s'assombrit tout en restant actif (wake lock). Un double appui affiche le menu.</p></li>
+          <li class="card"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/></svg><h3>Tous les enfants d'un coup d'œil</h3><p>Les parents voient tous les enfants actifs à la fois dans une grille dynamique, sans défilement. Chaque vignette peut être agrandie.</p></li>
+          <li class="card"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12c2.5-4 5-4 7.5 0s5 4 7.5 0 3.5-3 5-1.5"/><path d="M2 17c2.5-3 5-3 7.5 0s5 3 7.5 0"/></svg><h3>Cadre vert en cas d'activité</h3><p>En cas de bruit ou de mouvement, la vignette s'allume en vert. Seuils de son et de mouvement par enfant, réglables depuis l'appareil parents.</p></li>
+          <li class="card"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2.5" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3.5"/></svg><h3>Écouter et parler</h3><p>Écouter tous les enfants en même temps, volume par enfant, push-to-talk par enfant.</p></li>
+          <li class="card"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8V4.5A1.5 1.5 0 0 1 4.5 3H8M16 3h3.5A1.5 1.5 0 0 1 21 4.5V8M21 16v3.5a1.5 1.5 0 0 1-1.5 1.5H16M8 21H4.5A1.5 1.5 0 0 1 3 19.5V16"/><circle cx="12" cy="12" r="3.5"/></svg><h3>Mise au point automatique</h3><p>En cas de bruit, les derniers enfants actifs, jusqu'à quatre, passent au premier plan pendant environ cinq secondes.</p></li>
+          <li class="card"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></svg><h3>Alarme si un appareil enfant décroche</h3><p>Si un appareil enfant se déconnecte, une alarme retentit sur les appareils parents et doit être confirmée. En plus, des webhooks (GET, POST, PUT), par exemple vers Gotify, Slack ou Bark.</p></li>
+          <li class="card"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="10.5" width="15" height="10.5" rx="2"/><path d="M8 10.5V7a4 4 0 0 1 8 0v3.5"/></svg><h3>HTTPS directement dans le conteneur</h3><p>Certificat depuis un dossier (p. ex. Nginx Proxy Manager / Let's Encrypt), via l'API Cert Warden ou auto-signé en secours. Aucun reverse proxy nécessaire.</p></li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="how" class="section alt" aria-labelledby="how-title">
+      <div class="wrap">
+        <h2 id="how-title">Fonctionnement</h2>
+        <p class="lead">La vidéo et le son passent de l'appareil enfant à votre propre conteneur Docker, puis aux appareils parents. Le conteneur relaie les médias (mediasoup SFU) – en direct, sans enregistrement.</p>
+        <div class="diagram-box">
+          <svg class="diagram diagram-wide" viewBox="0 0 960 380" role="img" aria-labelledby="dg-t dg-d">
+<title id="dg-t">Flux : appareil enfant, serveur Docker dans votre LAN, appareils parents</title><desc id="dg-d">L'appareil enfant envoie la vidéo et le son via HTTPS et WebRTC au conteneur babyphone-cam dans votre LAN. Le conteneur les relaie en direct aux appareils parents. Tout reste dans votre LAN ou VPN WireGuard, sans cloud, sans enregistrement.</desc><defs><marker id="ahw" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 10 5 0 10z" class="d-arrowhead"/></marker></defs>
+<rect x="20" y="40" width="920" height="320" rx="22" class="d-zone"/>
+<text x="44" y="72" class="d-zone-label">Votre LAN ou VPN WireGuard</text>
+<g class="d-cloud" transform="translate(860 40)"><path d="M-40 4a16 16 0 0 1 10-26 22 22 0 0 1 40-6 15 15 0 0 1 22 18 12 12 0 0 1-4 14z" /><path d="M-44 -30 34 12" class="d-cross"/><text x="-4" y="30" text-anchor="middle" class="d-small">pas de cloud</text></g>
+<g transform="translate(150 190)"><rect x="-22" y="-38" width="44" height="76" rx="8" class="d-dev"/><rect x="-16" y="-28" width="32" height="52" rx="3" class="d-screen"/><circle cx="0" cy="-33" r="2.5" class="d-accent"/><path d="M-9 0q4-6 9 0t9 0" class="d-wave"/></g>
+<text x="150" y="268" text-anchor="middle" class="d-h">Appareil enfant</text>
+<text x="150" y="290" text-anchor="middle" class="d-small">navigateur, caméra + micro</text>
+<g transform="translate(480 186)"><rect x="-38" y="-30" width="76" height="60" rx="8" class="d-server"/><path d="M-26 -12h36M-26 0h44M-26 12h28" class="d-line-inv"/><circle cx="26" cy="-12" r="3.5" class="d-accent"/></g>
+<text x="480" y="252" text-anchor="middle" class="d-h">Serveur Docker</text>
+<text x="480" y="272" text-anchor="middle" class="d-mono">babyphone-cam</text>
+<text x="480" y="296" text-anchor="middle" class="d-small">HTTPS · connexion PIN</text><text x="480" y="316" text-anchor="middle" class="d-small">mediasoup SFU</text><text x="480" y="336" text-anchor="middle" class="d-small">en direct seulement</text>
+<g transform="translate(790 170)"><rect x="-34" y="-26" width="68" height="44" rx="5" class="d-dev"/><rect x="-28" y="-20" width="56" height="32" rx="2" class="d-screen"/><path d="M-44 22h88" class="d-dev-stroke"/><rect x="-24" y="-16" width="22" height="12" rx="1.5" class="d-tile-on"/><rect x="2" y="-16" width="22" height="12" rx="1.5" class="d-tile"/><rect x="-24" y="-1" width="22" height="10" rx="1.5" class="d-tile"/></g><g transform="translate(850 196)"><rect x="-22" y="-38" width="44" height="76" rx="8" class="d-dev"/><rect x="-16" y="-28" width="32" height="52" rx="3" class="d-screen"/><path d="M-9 -8h18M-9 0h18M-9 8h12" class="d-line"/></g>
+<text x="810" y="268" text-anchor="middle" class="d-h">Appareils parents</text>
+<text x="810" y="290" text-anchor="middle" class="d-small">autant de navigateurs que voulu</text>
+<path d="M200 176H412" class="d-arrow" marker-end="url(#ahw)"/>
+<text x="306" y="164" text-anchor="middle" class="d-small">vidéo + son</text>
+<path d="M548 176H732" class="d-arrow" marker-end="url(#ahw)"/>
+<text x="640" y="164" text-anchor="middle" class="d-small">en direct</text>
+<path d="M732 212H548" class="d-arrow-back" marker-end="url(#ahw)"/>
+<path d="M412 212H200" class="d-arrow-back" marker-end="url(#ahw)"/>
+<text x="650" y="238" text-anchor="middle" class="d-small">parler, seuils, caméra</text>
+</svg>
+          <svg class="diagram diagram-tall" viewBox="0 0 340 690" role="img" aria-labelledby="dgm-t dgm-d">
+<title id="dgm-t">Flux : appareil enfant, serveur Docker dans votre LAN, appareils parents</title><desc id="dgm-d">L'appareil enfant envoie la vidéo et le son via HTTPS et WebRTC au conteneur babyphone-cam dans votre LAN. Le conteneur les relaie en direct aux appareils parents. Tout reste dans votre LAN ou VPN WireGuard, sans cloud, sans enregistrement.</desc><defs><marker id="aht" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 10 5 0 10z" class="d-arrowhead"/></marker></defs>
+<rect x="8" y="8" width="324" height="674" rx="20" class="d-zone"/>
+<text x="26" y="38" class="d-zone-label">Votre LAN ou VPN WireGuard</text>
+<g transform="translate(90 110)"><rect x="-22" y="-38" width="44" height="76" rx="8" class="d-dev"/><rect x="-16" y="-28" width="32" height="52" rx="3" class="d-screen"/><circle cx="0" cy="-33" r="2.5" class="d-accent"/><path d="M-9 0q4-6 9 0t9 0" class="d-wave"/></g>
+<text x="130" y="104" class="d-h">Appareil enfant</text>
+<text x="130" y="126" class="d-small">navigateur, caméra + micro</text>
+<path d="M150 158V250" class="d-arrow" marker-end="url(#aht)"/>
+<text x="162" y="210" class="d-small">vidéo + son</text>
+<g transform="translate(90 310)"><rect x="-38" y="-30" width="76" height="60" rx="8" class="d-server"/><path d="M-26 -12h36M-26 0h44M-26 12h28" class="d-line-inv"/><circle cx="26" cy="-12" r="3.5" class="d-accent"/></g>
+<text x="148" y="290" class="d-h">Serveur Docker</text>
+<text x="148" y="310" class="d-mono">babyphone-cam</text>
+<text x="148" y="332" class="d-small">HTTPS · connexion PIN</text><text x="148" y="352" class="d-small">mediasoup SFU</text><text x="148" y="372" class="d-small">en direct seulement</text>
+<path d="M150 400V478" class="d-arrow" marker-end="url(#aht)"/>
+<text x="162" y="436" class="d-small">en direct</text>
+<path d="M70 478V400" class="d-arrow-back" marker-end="url(#aht)"/>
+<g transform="translate(130 530)"><rect x="-34" y="-26" width="68" height="44" rx="5" class="d-dev"/><rect x="-28" y="-20" width="56" height="32" rx="2" class="d-screen"/><path d="M-44 22h88" class="d-dev-stroke"/><rect x="-24" y="-16" width="22" height="12" rx="1.5" class="d-tile-on"/><rect x="2" y="-16" width="22" height="12" rx="1.5" class="d-tile"/><rect x="-24" y="-1" width="22" height="10" rx="1.5" class="d-tile"/></g><g transform="translate(196 546)"><rect x="-22" y="-38" width="44" height="76" rx="8" class="d-dev"/><rect x="-16" y="-28" width="32" height="52" rx="3" class="d-screen"/><path d="M-9 -8h18M-9 0h18M-9 8h12" class="d-line"/></g>
+<text x="170" y="616" text-anchor="middle" class="d-h">Appareils parents</text>
+<text x="170" y="638" text-anchor="middle" class="d-small">autant de navigateurs que voulu</text>
+<text x="170" y="664" text-anchor="middle" class="d-small d-muted">pas de cloud</text>
+</svg>
+        </div>
+      </div>
+    </section>
+
+    <section id="screens" class="section" aria-labelledby="screens-title">
+      <div class="wrap">
+        <h2 id="screens-title">Images de l'app</h2>
+        <p class="lead">Captures d'écran réelles de l'app avec des PIN de test. Les enfants dans l'image caméra sont des illustrations. L'interface de l'app existe en allemand et en anglais ; les captures montrent la version anglaise.</p>
+        <div class="shots shots-wide">
+        <figure class="shot shot-wide">
+          <a class="zoom" href="../assets/img/shots/parent-en.webp" aria-label="Agrandir l'image: Vue parents : trois enfants, Mia avec un cadre vert"><img src="../assets/img/shots/parent-en.webp" width="1280" height="800" alt="Vue parents avec trois vignettes. Mia (caméra) a un cadre vert, Leo (caméra) et Noah (son uniquement) sont calmes. Sous chaque vignette : volume, seuil de son et de mouvement, Talk et Switch camera." loading="lazy" decoding="async"></a>
+          <figcaption>Vue parents : trois enfants, Mia avec un cadre vert</figcaption>
+        </figure>
+        <figure class="shot shot-wide">
+          <a class="zoom" href="../assets/img/shots/enlarged-en.webp" aria-label="Agrandir l'image: Vue agrandie d'un enfant"><img src="../assets/img/shots/enlarged-en.webp" width="1280" height="800" alt="Vue agrandie de Mia montrant un bébé illustré qui dort dans son lit, avec les curseurs et le bouton Talk en dessous." loading="lazy" decoding="async"></a>
+          <figcaption>Vue agrandie d'un enfant</figcaption>
+        </figure>
+        <figure class="shot shot-wide">
+          <a class="zoom" href="../assets/img/shots/wizard-en.webp" aria-label="Agrandir l'image: Assistant de configuration au premier démarrage"><img src="../assets/img/shots/wizard-en.webp" width="680" height="450" alt="Assistant de configuration, étape 4 sur 7 : HTTPS avec les options Folder, Cert Warden et Self-signed." loading="lazy" decoding="async"></a>
+          <figcaption>Assistant de configuration au premier démarrage</figcaption>
+        </figure>
+        <figure class="shot shot-wide">
+          <a class="zoom" href="../assets/img/shots/settings-en.webp" aria-label="Agrandir l'image: Réglages protégés par le PIN admin"><img src="../assets/img/shots/settings-en.webp" width="680" height="800" alt="Page des réglages : PIN admin, PIN parents et PIN enfant, chacun avec l'origine de sa valeur." loading="lazy" decoding="async"></a>
+          <figcaption>Réglages protégés par le PIN admin</figcaption>
+        </figure>
+        </div>
+        <div class="shots shots-phone">
+        <figure class="shot shot-phone">
+          <a class="zoom" href="../assets/img/shots/parent-phone-en.webp" aria-label="Agrandir l'image: Vue parents sur un téléphone"><img src="../assets/img/shots/parent-phone-en.webp" width="390" height="844" alt="Vue parents sur un téléphone : trois enfants les uns sous les autres sans défilement, Mia avec un cadre vert." loading="lazy" decoding="async"></a>
+          <figcaption>Vue parents sur un téléphone</figcaption>
+        </figure>
+        <figure class="shot shot-phone">
+          <a class="zoom" href="../assets/img/shots/start-en.webp" aria-label="Agrandir l'image: Page d'accueil : choisir le rôle"><img src="../assets/img/shots/start-en.webp" width="780" height="1688" alt="Page d'accueil sur un téléphone avec le logo, les boutons Child et Parents, et Settings." loading="lazy" decoding="async"></a>
+          <figcaption>Page d'accueil : choisir le rôle</figcaption>
+        </figure>
+        <figure class="shot shot-phone">
+          <a class="zoom" href="../assets/img/shots/child-en.webp" aria-label="Agrandir l'image: Appareil enfant : nom, mode, caméra"><img src="../assets/img/shots/child-en.webp" width="780" height="1688" alt="Appareil enfant sur un téléphone : nom Mia sélectionné, mode Camera, caméra avant, bouton Start." loading="lazy" decoding="async"></a>
+          <figcaption>Appareil enfant : nom, mode, caméra</figcaption>
+        </figure>
+        <figure class="shot shot-phone">
+          <a class="zoom" href="../assets/img/shots/child-running-en.webp" aria-label="Agrandir l'image: Appareil enfant actif : écran sombre"><img src="../assets/img/shots/child-running-en.webp" width="780" height="1688" alt="Appareil enfant en marche : écran noir, en bas le menu avec Connected, Switch camera et Stop." loading="lazy" decoding="async"></a>
+          <figcaption>Appareil enfant actif : écran sombre</figcaption>
+        </figure>
+        </div>
+      </div>
+    </section>
+
+    <section id="privacy" class="section alt" aria-labelledby="privacy-title">
+      <div class="wrap">
+        <h2 id="privacy-title">Confidentialité et sécurité</h2>
+        <ul class="privacy">
+          <li><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5 4 5.5v6c0 5 3.5 8.5 8 10 4.5-1.5 8-5 8-10v-6z"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg><div><h3>Pas de cloud, pas de compte</h3><p>Pas de serveur du fabricant, pas d'inscription, pas d'app. Le conteneur tourne chez vous.</p></div></li>
+          <li><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5 4 5.5v6c0 5 3.5 8.5 8 10 4.5-1.5 8-5 8-10v-6z"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg><div><h3>LAN ou VPN uniquement</h3><p>Conçu pour le réseau domestique ou un VPN WireGuard. Par défaut, seuls les appareils de réseaux privés sont admis (liste d'IP autorisées).</p></div></li>
+          <li><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5 4 5.5v6c0 5 3.5 8.5 8 10 4.5-1.5 8-5 8-10v-6z"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg><div><h3>Rien n'est enregistré</h3><p>La vidéo et le son s'arrêtent au conteneur et ne sont relayés qu'en direct. Il n'y a aucun enregistrement.</p></div></li>
+          <li><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5 4 5.5v6c0 5 3.5 8.5 8 10 4.5-1.5 8-5 8-10v-6z"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg><div><h3>PIN protégés</h3><p>PIN séparés pour enfant, parents et admin. La connexion par PIN est limitée contre les essais répétés (rate limit).</p></div></li>
+          <li><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5 4 5.5v6c0 5 3.5 8.5 8 10 4.5-1.5 8-5 8-10v-6z"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg><div><h3>Open source</h3><p>Code source sous licence AGPL-3.0 sur GitHub. L'image est reconstruite automatiquement chaque semaine pour intégrer les mises à jour de sécurité.</p></div></li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="install" class="section" aria-labelledby="install-title">
+      <div class="wrap install-grid">
+        <div>
+          <h2 id="install-title">Installation</h2>
+          <ol class="steps">
+            <li>Reprendre compose.yaml et .env.example du dépôt ; définir au moins l'IP du conteneur (BABYPHONE_IP) et le dossier des certificats (CERTS_DIR).</li>
+            <li>Démarrer le conteneur, p. ex. avec <code>docker compose up -d</code> ou comme nouvelle stack dans le Compose Manager d'Unraid.</li>
+            <li>Ouvrir <code>https://&lt;IP ou nom&gt;/</code> dans le navigateur. L'assistant demande les PIN, les prénoms des enfants, HTTPS, les alarmes et les webhooks.</li>
+            <li>Sur l'appareil enfant, choisir le rôle enfant ; sur l'appareil parents, le rôle parents – chacun avec son PIN.</li>
+          </ol>
+          <h3 id="req-title">Prérequis</h3>
+          <ul class="req">
+            <li>Un hôte Docker dans le réseau domestique, par exemple Unraid.</li>
+            <li>Un certificat HTTPS pour un nom qui pointe vers le conteneur dans le LAN. Les navigateurs n'autorisent caméra et micro qu'en HTTPS. Sans certificat, le conteneur utilise un certificat auto-signé (avertissement du navigateur).</li>
+            <li>LAN ou VPN WireGuard (le sous-réseau VPN doit être routé vers le LAN).</li>
+            <li>Ports 443/tcp (web, WebSocket), 80/tcp (redirection vers HTTPS) et 40000/udp + tcp (médias).</li>
+            <li>Conçu pour les navigateurs actuels (Chrome, Firefox, Safari, Edge) avec accès à la caméra ou au micro.</li>
+          </ul>
+        </div>
+        <div>
+          <p class="note">Exemple abrégé du fichier compose/compose.yaml (Unraid, réseau br0 avec sa propre IP). Le fichier complet et renforcé ainsi que .env.example se trouvent dans le dépôt.</p>
+          <pre class="code" tabindex="0"><code><span class="c"># compose.yaml</span>
+services:
+  babyphone:
+    image: ghcr.io/helmi1987/babyphone-cam:latest
+    container_name: babyphone
+    restart: unless-stopped
+    environment:
+      - TZ=Europe/Zurich
+      - CERTS_DIR=/certs
+      - ANNOUNCED_IP=192.168.1.30
+    volumes:
+      - /mnt/user/appdata/babyphone:/data
+      - /mnt/user/appdata/Nginx-Proxy-Manager-Official/letsencrypt:/certs:ro
+    networks:
+      br0:
+        ipv4_address: 192.168.1.30
+
+networks:
+  br0:
+    external: true</code></pre>
+          <p><a href="https://github.com/helmi1987/babyphone-cam/blob/main/compose/compose.yaml" rel="noopener">compose.yaml complet sur GitHub</a></p>
+        </div>
+      </div>
+    </section>
+
+    <section id="faq" class="section alt" aria-labelledby="faq-title">
+      <div class="wrap narrow">
+        <h2 id="faq-title">Questions fréquentes</h2>
+        <details><summary>Faut-il une app ?</summary><p>Non. Les appareils enfant et parents utilisent seulement le navigateur.</p></details>
+        <details><summary>Est-ce que ça marche hors de la maison ?</summary><p>Uniquement via un VPN comme WireGuard routé vers le réseau domestique. Il n'y a volontairement aucun accès cloud.</p></details>
+        <details><summary>Quelque chose est-il stocké ou enregistré ?</summary><p>Non. La vidéo et le son ne sont relayés qu'en direct. Seuls les réglages sont stockés, les PIN uniquement sous forme de hash.</p></details>
+        <details><summary>À quoi faut-il faire attention sur l'appareil enfant ?</summary><p>Garder la page au premier plan, l'écran déverrouillé et l'appareil branché. Verrouiller ou changer d'app arrête caméra et micro (iOS, Android). Les écrans LCD restent rétroéclairés, seuls les OLED deviennent vraiment noirs.</p></details>
+        <details><summary>Sur quels appareils a-t-il été testé ?</summary><p>L'app est conçue pour les navigateurs actuels (Chrome, Firefox, Safari, Edge). Les tests sur de vrais appareils iOS et Android sont encore à faire.</p></details>
+        <details><summary>Dans quelles langues l'app est-elle disponible ?</summary><p>L'interface de l'app existe en allemand et en anglais, selon la langue du navigateur.</p></details>
+        <details><summary>Combien ça coûte ?</summary><p>Rien. babyphone-cam est open source sous licence AGPL-3.0.</p></details>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap footer-row">
+      <p><img src="../assets/img/icon.svg" width="24" height="24" alt=""> © 2026 Stefan Diethelm · <a href="https://github.com/helmi1987/babyphone-cam/blob/main/LICENSE" rel="noopener">Licence : AGPL-3.0</a> · <a href="https://github.com/helmi1987/babyphone-cam" rel="noopener">Code source sur GitHub</a></p>
+      <!-- IMPRESSUM PLACEHOLDER: add a link to the legal notice / Impressum page here once it exists. No personal data is invented on this site. -->
+      <p class="muted">Ce site n'utilise pas de cookies et ne charge rien depuis des serveurs tiers.</p>
+      <p><a href="#main">Haut de page ↑</a></p>
+    </div>
+  </footer>
+
+  <dialog class="lightbox" aria-label="Agrandir l'image">
+    <form method="dialog"><button class="lb-close" type="submit" aria-label="Fermer">×</button></form>
+    <img alt="">
+  </dialog>
+</body>
+</html>

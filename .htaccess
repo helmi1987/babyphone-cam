@@ -1,0 +1,84 @@
+# babyphone-cam product page - Apache configuration (Plesk)
+
+Options -Indexes
+DirectoryIndex index.html
+AddDefaultCharset utf-8
+AddType image/webp .webp
+AddType image/svg+xml .svg
+AddType application/xml .xml
+AddType text/javascript .js
+
+# ---------- access rules ----------
+# Dotfiles (.git, .htaccess, ...) except .well-known (Let's Encrypt), README and generator sources
+<FilesMatch "^(\.|README\.md$)">
+  <IfModule mod_authz_core.c>
+    Require all denied
+  </IfModule>
+  <IfModule !mod_authz_core.c>
+    Order allow,deny
+    Deny from all
+  </IfModule>
+</FilesMatch>
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  # Force HTTPS - enable once the certificate for babyphone.helminet.ch exists:
+  # RewriteCond %{HTTPS} !=on
+  # RewriteCond %{HTTP:X-Forwarded-Proto} !=https
+  # RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+  # Deny dot-directories (except .well-known), _src and README
+  RewriteRule (^|/)\.(?!well-known(/|$)) - [F,L]
+  RewriteRule ^_src(/|$) - [F,L]
+  RewriteRule (^|/)README\.md$ - [F,L]
+
+  # Language redirect for the start page by Accept-Language (first preference), fallback en.
+  # %1 = directory part of the request, so this also works when the site lives in a sub folder.
+  RewriteCond %{HTTP:Accept-Language} ^(de|gsw) [NC]
+  RewriteCond %{REQUEST_URI} ^(.*/)$
+  RewriteRule ^(index\.html)?$ %1de/ [R=302,L]
+  RewriteCond %{HTTP:Accept-Language} ^it [NC]
+  RewriteCond %{REQUEST_URI} ^(.*/)$
+  RewriteRule ^(index\.html)?$ %1it/ [R=302,L]
+  RewriteCond %{HTTP:Accept-Language} ^fr [NC]
+  RewriteCond %{REQUEST_URI} ^(.*/)$
+  RewriteRule ^(index\.html)?$ %1fr/ [R=302,L]
+  RewriteCond %{REQUEST_URI} ^(.*/)$
+  RewriteRule ^(index\.html)?$ %1en/ [R=302,L]
+</IfModule>
+
+# ---------- headers ----------
+<IfModule mod_headers.c>
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  Header always set X-Frame-Options "DENY"
+  Header always set Permissions-Policy "camera=(), microphone=(), geolocation=(), interest-cohort=()"
+  Header always set Content-Security-Policy "default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+  <FilesMatch "\.html$">
+    Header set Cache-Control "no-cache"
+  </FilesMatch>
+  <FilesMatch "\.(css|js)$">
+    Header set Cache-Control "public, max-age=604800"
+  </FilesMatch>
+  <FilesMatch "\.(webp|png|svg|ico)$">
+    Header set Cache-Control "public, max-age=2592000"
+  </FilesMatch>
+</IfModule>
+
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresDefault "access plus 1 hour"
+  ExpiresByType text/html "access plus 0 seconds"
+  ExpiresByType text/css "access plus 7 days"
+  ExpiresByType text/javascript "access plus 7 days"
+  ExpiresByType image/webp "access plus 30 days"
+  ExpiresByType image/png "access plus 30 days"
+  ExpiresByType image/svg+xml "access plus 30 days"
+  ExpiresByType image/x-icon "access plus 30 days"
+  ExpiresByType image/vnd.microsoft.icon "access plus 30 days"
+</IfModule>
+
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/css text/javascript application/javascript image/svg+xml application/xml text/plain
+</IfModule>

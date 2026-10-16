@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 480" width="640" height="480">
+  <!-- Illustration: toddler asleep in bed hugging a teddy, night room -->
+  <defs>
+    <linearGradient id="wall" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#25305a"/>
+      <stop offset="1" stop-color="#1a2244"/>
+    </linearGradient>
+    <radialGradient id="lamp" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#ffd46b" stop-opacity=".55"/>
+      <stop offset="1" stop-color="#ffd46b" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="quilt" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#4fbf86"/>
+      <stop offset="1" stop-color="#2f8f62"/>
+    </linearGradient>
+  </defs>
+  <rect width="640" height="480" fill="url(#wall)"/>
+  <!-- window with moon -->
+  <rect x="380" y="40" width="200" height="150" rx="10" fill="#0f1533" stroke="#3b4a80" stroke-width="10"/>
+  <line x1="480" y1="40" x2="480" y2="190" stroke="#3b4a80" stroke-width="6"/>
+  <path d="M430 70 a34 34 0 1 0 36 50 a28 28 0 1 1 -36 -50z" fill="#ffd46b"/>
+  <g id="stars" fill="#fff">
+    <circle id="s1" cx="520" cy="80" r="3.5"/>
+    <circle id="s2" cx="548" cy="130" r="2.5"/>
+    <circle id="s3" cx="505" cy="160" r="2"/>
+    <circle id="s4" cx="410" cy="160" r="2.5"/>
+  </g>
+  <!-- curtains -->
+  <path d="M370 30 q20 90 -6 180 h-24 q20 -90 -4 -180z" fill="#6b4f8f"/>
+  <path d="M590 30 q-20 90 6 180 h24 q-20 -90 4 -180z" fill="#6b4f8f"/>
+  <!-- night lamp -->
+  <circle cx="80" cy="250" r="110" fill="url(#lamp)" id="lampglow"/>
+  <rect x="58" y="300" width="44" height="60" rx="6" fill="#4a3d6b"/>
+  <path d="M50 300 l14 -60 h32 l14 60z" fill="#ffe7a8"/>
+  <!-- floor -->
+  <rect y="400" width="640" height="80" fill="#141a35"/>
+  <!-- bed -->
+  <rect x="140" y="210" width="26" height="220" rx="8" fill="#8a6b52"/>
+  <rect x="150" y="300" width="460" height="100" rx="12" fill="#a07e62"/>
+  <rect x="160" y="290" width="440" height="30" rx="12" fill="#e7ecf8"/>
+  <!-- pillow -->
+  <ellipse cx="240" cy="280" rx="72" ry="30" fill="#f2f4fb"/>
+  <!-- head -->
+  <g transform="translate(250 252)">
+    <circle r="46" fill="#e8c2a0"/>
+    <path d="M-46 -6 q4 -50 50 -46 q40 4 42 40 q-14 -18 -34 -20 q-6 10 -20 8 q-20 -4 -38 18z" fill="#8b5a3c"/>
+    <path d="M-20 4 q9 8 18 0" stroke="#5a3d2e" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <path d="M10 4 q9 8 18 0" stroke="#5a3d2e" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <circle cx="-22" cy="20" r="8" fill="#f19a9a" opacity=".5"/>
+    <circle cx="30" cy="20" r="8" fill="#f19a9a" opacity=".5"/>
+    <path d="M0 26 q5 4 10 0" stroke="#a5614f" stroke-width="3" fill="none" stroke-linecap="round"/>
+  </g>
+  <!-- teddy -->
+  <g transform="translate(330 262)">
+    <circle cx="-20" cy="-34" r="12" fill="#b07a4c"/>
+    <circle cx="20" cy="-34" r="12" fill="#b07a4c"/>
+    <circle cy="-14" r="30" fill="#c58c5a"/>
+    <ellipse cy="-4" rx="13" ry="10" fill="#e8c49a"/>
+    <circle cy="-8" r="4" fill="#3a2a1e"/>
+    <circle cx="-11" cy="-20" r="3.5" fill="#3a2a1e"/>
+    <circle cx="11" cy="-20" r="3.5" fill="#3a2a1e"/>
+    <ellipse cy="30" rx="34" ry="30" fill="#c58c5a"/>
+  </g>
+  <!-- quilt (breathing) -->
+  <g id="quiltg" transform="translate(0 0)">
+    <path id="quilt" d="M200 300 q40 -40 130 -30 q90 10 140 0 q80 -10 130 10 v80 h-400z" fill="url(#quilt)"/>
+    <path d="M220 330 q30 -14 60 0 t60 0 t60 0 t60 0 t60 0 t60 0" stroke="#bff0d3" stroke-width="6" fill="none" opacity=".55" stroke-linecap="round"/>
+    <!-- arm hugging teddy -->
+    <path d="M300 290 q30 -10 56 4" stroke="#e8c2a0" stroke-width="18" fill="none" stroke-linecap="round"/>
+  </g>
+  <!-- Zzz -->
+  <g fill="#dfe6ff" font-family="DejaVu Sans, sans-serif" font-weight="700">
+    <text id="z1" x="290" y="190" font-size="30">z</text>
+    <text id="z2" x="316" y="160" font-size="22">z</text>
+    <text id="z3" x="336" y="138" font-size="16">z</text>
+  </g>
+</svg>
