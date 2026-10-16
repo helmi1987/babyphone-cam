@@ -47,12 +47,26 @@ export function hostWithoutPort(value) {
   return v.split(':')[0].replace(/\.+$/, '');
 }
 
-// Against DNS rebinding: IPs, local names, certificate names and HOSTS only.
+// Host name of BASE_URL ('' when not set).
+export function baseHost() {
+  if (!config.baseUrl) return '';
+  try {
+    return hostWithoutPort(new URL(config.baseUrl).host);
+  } catch {
+    return '';
+  }
+}
+
+// Against DNS rebinding: IPs, local names, certificate names, HOSTS and the
+// BASE_URL host only. Setup mode accepts any host (the wizard is unprotected
+// by design; login, admin API and WebSocket are closed until setup is done).
 export function knownHost(value, certNames = []) {
+  if (setupMode()) return true;
   const host = hostWithoutPort(value);
   if (!host.includes('.')) return true; // no host, localhost, plain names, IPv6 literals
   if (net.isIP(host)) return true;
   if (LOCAL_SUFFIXES.some((s) => host.endsWith(s))) return true;
+  if (host === baseHost()) return true;
   for (const name of [...config.hosts, ...certNames]) {
     if (name.startsWith('*.') || name.startsWith('.')) {
       if (host.endsWith(name.slice(name.indexOf('.')))) return true;

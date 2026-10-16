@@ -43,6 +43,17 @@ Everything except infrastructure is set in the browser:
   Verbindung"). The PINs then travel unencrypted through the LAN. After
   saving, the page switches to HTTPS (the server restarts first when the
   certificate source changed) and HTTP only redirects to HTTPS.
+  While setup is open the wizard works on any address (IP or DNS name); the
+  DNS name used is added to `HOSTS` on save.
+- **App address (`BASE_URL`):** optional, e.g. `https://baby.example.ch`
+  (wizard HTTPS step or Einstellungen → HTTPS; ENV `BASE_URL` as start
+  value). After setup every HTTP request and every page opened over HTTPS on
+  another address (e.g. the IP) is redirected there (302). The API keeps
+  working on the IP. **If the address is wrong:** open
+  `https://<IP>/?nobase` (skips the redirect once), sign in under
+  Einstellungen and correct it. Changing the ENV value does not help once a
+  value is saved (the saved value wins); last resort: delete `BASE_URL` from
+  `DATA_DIR/settings.json` and restart the container.
 - **Later:** start page → **Einstellungen** → admin PIN. All settings grouped
   like the wizard plus network (without an admin PIN yet: "Admin-PIN
   festlegen" with the parent PIN); each shows where its value comes from (web UI,
@@ -71,6 +82,11 @@ a name in your domain that resolves to `BABYPHONE_IP` in your LAN:
 - **A – folder:** mount the certificate folder (e.g. Nginx Proxy Manager's
   `letsencrypt`) read-only; the newest matching `fullchain.pem`/`privkey.pem`
   is used and reloaded when renewed. Or set the certificate and key files.
+  Note: Nginx Proxy Manager keeps private keys root-only (0600), while the
+  container runs as `PUID`, so reading `privkey.pem` may fail with `EACCES`.
+  The log names each skipped folder and why (`permission denied`,
+  `certificate has expired`, `key and certificate do not belong together`,
+  `no fullchain.pem/privkey.pem`). Then use Cert Warden instead (B).
 - **B – Cert Warden:** address, certificate name and both API keys in the
   settings ("Test" checks them). Fetched and renewed by the container.
 
@@ -81,7 +97,7 @@ Without either, a self-signed certificate is used (browser warning).
 | Port | Use |
 |---|---|
 | 443/tcp | Web page, WebSocket |
-| 80/tcp | Redirect to HTTPS; first-start wizard only while setup is open |
+| 80/tcp | Redirect to HTTPS (or `BASE_URL`); first-start wizard only while setup is open |
 | 40000/udp + tcp | Media (`RTC_PORT`) |
 
 Over WireGuard the VPN subnet must be routed to the LAN.

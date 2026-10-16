@@ -143,9 +143,10 @@ export function mountWizard(app, { mode, nav }) {
   }
 
   // Setup over HTTP ends on HTTPS; the server restarts itself first when TLS settings changed.
+  // BASE_URL (if set) wins over the host the wizard was opened with.
   function toHttps(result) {
     const port = Number(result?.httpsPort) || 443;
-    const url = `https://${location.hostname}${port === 443 ? '' : `:${port}`}/`;
+    const url = result?.baseUrl ? `${result.baseUrl}/` : `https://${location.hostname}${port === 443 ? '' : `:${port}`}/`;
     root.replaceChildren(
       h('h1', null, t('saved')),
       h('p', null, t('setupDone')),
@@ -167,7 +168,12 @@ export function mountWizard(app, { mode, nav }) {
         h('button', {
           type: 'button',
           class: 'primary',
-          onclick: () => (setup ? location.reload() : nav.go('admin')),
+          onclick: () => {
+            if (!setup) return nav.go('admin');
+            // continue on BASE_URL when the wizard ran on another host (e.g. the IP)
+            if (result?.baseUrl && new URL(result.baseUrl).host !== location.host) location.href = `${result.baseUrl}/`;
+            else location.reload();
+          },
         }, setup ? t('toStart') : t('settings'))));
   }
 

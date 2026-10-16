@@ -29,6 +29,7 @@ services:
       - ADMIN_PIN=${ADMIN_PIN:-}
       - PARENT_PIN=${PARENT_PIN:-}
       - CHILD_PIN=${CHILD_PIN:-}
+      - BASE_URL=${BASE_URL:-}
       - ANNOUNCED_IP=${BABYPHONE_IP}
     volumes:
       - ${DATA_DIR:-/mnt/user/appdata/babyphone}:/data
@@ -37,7 +38,8 @@ services:
       br0:
         ipv4_address: ${BABYPHONE_IP:?BABYPHONE_IP is missing in .env}
     labels:
-      net.unraid.docker.webui: ${WEBUI:-https://[IP]/}
+      # http://[IP]/ is enough: after setup the app redirects to BASE_URL
+      net.unraid.docker.webui: ${WEBUI:-http://[IP]/}
       net.unraid.docker.icon: https://raw.githubusercontent.com/helmi1987/babyphone-cam/main/.github/icons/babyphone.png
     logging:
       driver: json-file

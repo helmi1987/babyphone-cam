@@ -3,9 +3,10 @@
 
 // Settings state for the browser (without secrets), input validation and tests.
 
+import net from 'node:net';
 import { effective, infra, log, restartPending, sourceOf } from './config.js';
 import { certFacts, certwardenFetch } from './certs.js';
-import { hashPin, pinHash, pinSource, setupMode, verifyHash } from './security.js';
+import { hashPin, hostWithoutPort, pinHash, pinSource, setupMode, verifyHash } from './security.js';
 import { FIELD, FIELDS, PIN_KEYS, WEBHOOK_EVENTS, ipInCidrs, parseCidr, parseField } from './settings.js';
 import { testWebhook } from './webhooks.js';
 
@@ -82,8 +83,34 @@ function mergeHooks(list) {
   return { value: out };
 }
 
+// DNS name worth adding to HOSTS (not an IP, not a single label like localhost).
+function dnsName(value) {
+  const host = hostWithoutPort(value);
+  return host && host.includes('.') && !net.isIP(host) ? host : '';
+}
+
+// Setup: the host the wizard was opened with and the BASE_URL host join HOSTS,
+// so they keep working once setup mode (which accepts any host) ends.
+function setupHosts(changes, host) {
+  const base = 'BASE_URL' in changes ? changes.BASE_URL : effective('BASE_URL');
+  const add = [dnsName(host)];
+  if (base) {
+    try {
+      add.push(dnsName(new URL(base).host));
+    } catch { /* validated before */ }
+  }
+  const current = 'HOSTS' in changes ? changes.HOSTS : effective('HOSTS');
+  const r = parseField(FIELD.HOSTS, [...current, ...add.filter(Boolean)]);
+  if (r.error) {
+    log(`settings: cannot add setup host to HOSTS (${r.error.code})`);
+    return;
+  }
+  if (!same(r.value, current)) changes.HOSTS = r.value;
+}
+
 // Validate browser input {KEY: value}. Returns {errors} or {changes, pinRoles}.
-export async function buildChanges(values, { setup, ip }) {
+// host: Host header of the request (setup adds it to HOSTS).
+export async function buildChanges(values, { setup, ip, host = '' }) {
   if (!values || typeof values !== 'object' || Array.isArray(values)) return { errors: { _: { code: 'type' } } };
   const errors = {};
   const changes = {};
@@ -160,6 +187,7 @@ export async function buildChanges(values, { setup, ip }) {
 
   if (Object.keys(errors).length) return { errors };
   for (const [role, pin] of Object.entries(newPins)) changes[PIN_KEYS[role]] = await hashPin(pin);
+  if (setup) setupHosts(changes, host);
   // Adopt values that still come from ENV, so saving makes the backend the only source
   // and the ENV variables can be removed afterwards.
   for (const f of FIELDS) {

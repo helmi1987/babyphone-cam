@@ -21,6 +21,7 @@ export const FIELDS = [
   { key: 'PARENT_PIN', group: 'pins', type: 'pin', secret: true },
   { key: 'CHILD_PIN', group: 'pins', type: 'pin', secret: true },
   { key: 'CHILD_NAMES', group: 'children', type: 'names', def: [], prop: 'childNames' },
+  { key: 'BASE_URL', group: 'https', type: 'baseurl', def: '', prop: 'baseUrl' },
   { key: 'TLS_SOURCE', group: 'https', type: 'enum', values: TLS_SOURCES, def: 'auto', prop: 'tlsSource', restart: true },
   { key: 'CERTWARDEN_ENDPOINT_URL', group: 'https', type: 'url', def: '', prop: 'certwardenUrl', restart: true },
   { key: 'CERT_NAME', group: 'https', type: 'certname', def: '', prop: 'certName', restart: true },
@@ -199,6 +200,21 @@ export function parseField(f, raw) {
         return err('url');
       }
       return { value: s.replace(/\/+$/, '') };
+    }
+    case 'baseurl': {
+      // https://host[:port] only; a trailing slash is accepted and removed
+      const s = asText(raw);
+      if (s === null) return err('baseurl');
+      if (s === '') return { value: '' };
+      let u;
+      try {
+        u = new URL(s);
+      } catch {
+        return err('baseurl');
+      }
+      if (u.protocol !== 'https:' || !u.hostname || u.username || u.password || u.search || u.hash
+        || u.pathname !== '/' || !/^https:\/\/[^/?#]+\/?$/i.test(s)) return err('baseurl');
+      return { value: u.origin };
     }
     case 'certname': {
       const s = asText(raw);

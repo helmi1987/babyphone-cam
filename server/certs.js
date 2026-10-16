@@ -161,34 +161,86 @@ async function certwardenSync() {
 
 // ---------------------------------------------------------------- CERTS_DIR
 
+// Subfolders of dir; {dirs, error} where error is an fs error code or ''.
 function listDirs(dir) {
   try {
-    return fs.readdirSync(dir, { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => path.join(dir, d.name));
-  } catch {
-    return [];
+    const dirs = fs.readdirSync(dir, { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => path.join(dir, d.name));
+    return { dirs, error: '' };
+  } catch (e) {
+    return { dirs: [], error: e.code || 'error' };
   }
 }
 
+const denied = (code) => code === 'EACCES' || code === 'EPERM';
+
+// Why a folder's pair cannot be used, from an fs error or a checkPair error.
+function skipReason(e, label) {
+  if (e.code) {
+    const file = path.basename(e.path || '') || '?';
+    return denied(e.code) ? `${file} permission denied (${e.code})` : `${file} not readable (${e.code})`;
+  }
+  const msg = String(e.message || e);
+  return msg.startsWith(`${label}: `) ? msg.slice(label.length + 2) : msg;
+}
+
+// fullchain.pem + privkey.pem of a folder: {pair} or {reason}.
+function pairOrReason(folder) {
+  const missing = [];
+  for (const name of ['fullchain.pem', 'privkey.pem']) {
+    try {
+      if (!fs.statSync(path.join(folder, name)).isFile()) missing.push(name);
+    } catch (e) {
+      if (denied(e.code)) return { reason: `${name} permission denied (${e.code})` };
+      missing.push(name);
+    }
+  }
+  if (missing.length) return { reason: `no ${missing.join('/')}` };
+  return { pair: [path.join(folder, 'fullchain.pem'), path.join(folder, 'privkey.pem')] };
+}
+
+// Scan report of the last run; logged again only when it changes (re-scans run every 5 min).
+let lastScanReport = null;
+
 function scanCertsDir() {
-  const folders = [...listDirs(path.join(config.certsDir, 'live')), ...listDirs(config.certsDir)];
+  const live = path.join(config.certsDir, 'live');
+  const top = listDirs(config.certsDir);
+  const folders = [...listDirs(live).dirs, ...top.dirs.filter((d) => d !== live)];
   const found = [];
+  const lines = [];
   const seen = new Set();
   for (const folder of folders) {
-    const pair = pairIn(folder);
-    if (!pair) continue;
+    const r = pairOrReason(folder);
+    if (r.reason) {
+      lines.push(`TLS: skipping ${folder}: ${r.reason}`);
+      continue;
+    }
     let real;
     try {
-      real = fs.realpathSync(pair[0]);
-    } catch {
+      real = fs.realpathSync(r.pair[0]);
+    } catch (e) {
+      lines.push(`TLS: skipping ${folder}: ${skipReason(e, r.pair[0])}`);
       continue;
     }
     if (seen.has(real)) continue;
     seen.add(real);
     try {
-      found.push(readPair(pair[0], pair[1], pair[0]));
-    } catch {
-      // invalid, expired or unreadable: skip
+      found.push(readPair(r.pair[0], r.pair[1], r.pair[0]));
+    } catch (e) {
+      lines.push(`TLS: skipping ${folder}: ${skipReason(e, r.pair[0])}`);
     }
+  }
+  if (!found.length) {
+    let dirState;
+    if (top.error === 'ENOENT') dirState = 'does not exist';
+    else if (top.error) dirState = `is not readable (${top.error})`;
+    else dirState = `exists, ${folders.length} folder${folders.length === 1 ? '' : 's'} checked (live/* and */)`;
+    lines.push(`TLS: no usable certificate in CERTS_DIR ${config.certsDir}: ${dirState}`);
+    lines.push('TLS: WARNING no valid certificate found, using self-signed');
+  }
+  const report = lines.join('\n');
+  if (report !== lastScanReport) {
+    lastScanReport = report;
+    for (const line of lines) log(line);
   }
   found.sort((a, b) => b.expires - a.expires); // longest valid first = default
   return found;
@@ -262,7 +314,6 @@ async function choose() {
   }
   const scanned = scanCertsDir();
   if (scanned.length) return scanned;
-  log('TLS: WARNING no valid certificate found, using self-signed');
   return [await selfSigned()];
 }
 

@@ -51,7 +51,8 @@ Restart needed for: ports, `ANNOUNCED_IP`, `TLS_SOURCE`, Cert Warden and
 | `TLS_SOURCE` | `auto` | `auto`, `certwarden`, `folder` (skip Cert Warden), `selfsigned` |
 | `CHILD_NAMES` | empty | Fixed names, comma-separated; free name always possible |
 | `ALLOWED_CIDRS` | `10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,127.0.0.0/8,100.64.0.0/10,::1/128,fc00::/7,fe80::/10` | Client IPs allowed (HTTP, WS). IPv4-mapped IPv6 normalised |
-| `HOSTS` | empty | Extra host names accepted, comma-separated, `*.example.org` allowed |
+| `HOSTS` | empty | Extra host names accepted, comma-separated, `*.example.org` allowed. The first-start wizard adds the DNS name it was opened with and the `BASE_URL` host |
+| `BASE_URL` | empty | `https://host[:port]` (no path) the app is reached at. After setup: plain HTTP and HTTPS page loads on another host go there (302). Live |
 | `HTTPS_PORT` | `443` | |
 | `HTTP_PORT` | `80` | Redirect to HTTPS (setup mode: wizard over HTTP); `0` = off |
 | `RTC_PORT` | `40000` | mediasoup WebRtcServer, UDP and TCP |
@@ -90,7 +91,16 @@ and chain. Check key matches cert and not expired, store in
 - Every request: client IP must be in `ALLOWED_CIDRS`, else 403. Host header
   must be an IP, a local name (no dot, or suffix `.local .lan .home
   .home.arpa .internal .fritz.box .ts.net`), a name of the served certificate
-  (CN/SAN, wildcard) or in `HOSTS`; else 421 (DNS rebinding).
+  (CN/SAN, wildcard), in `HOSTS` or the `BASE_URL` host; else 421 (DNS
+  rebinding). With `BASE_URL` set, an unknown host gets the 302 to
+  `BASE_URL` instead for plain HTTP and page loads (reveals nothing).
+- Setup mode accepts any Host header (HTTP and HTTPS), so the wizard opens
+  on any DNS name pointing at the container. Residual risk: during setup a
+  DNS-rebinding page could drive the wizard API; setup is unprotected by
+  design anyway (anyone in the LAN can run it), login, admin API and `/ws`
+  stay closed (503). Saving `POST /api/setup` adds the request's Host (if a
+  DNS name, not an IP or single label) and the `BASE_URL` host to `HOSTS`
+  (merged, no duplicates), so the check applies again right after setup.
 - Setup mode (parent or child PIN missing): every page request shows the
   wizard, no protection code. `GET /api/setup/state`, `POST /api/setup`,
   `POST /api/setup/test-certwarden`, `POST /api/setup/test-webhook` only
@@ -102,11 +112,22 @@ and chain. Check key matches cert and not expired, store in
   mode it serves the static files, `/api/config` and `/api/setup*` (same IP
   and host checks, same-origin with `http:` origin); other API paths answer
   403, `/ws` 403. During this first setup the PINs travel unencrypted in the
-  LAN. `POST /api/setup` over HTTP sets no cookie and returns `httpsPort` and
-  `restarting`; when TLS settings need a restart the server exits 0 after the
-  answer (restart policy). The page waits (1.5 s, or 6 s on restart) and goes
-  to `https://<host>[:port]/`. Outside setup mode (checked per request) every
-  HTTP request gets 301 to `https://<host>[:HTTPS_PORT]<path>`.
+  LAN. `POST /api/setup` over HTTP sets no cookie and returns `httpsPort`,
+  `baseUrl` and `restarting`; when TLS settings need a restart the server
+  exits 0 after the answer (restart policy). The page waits (1.5 s, or 6 s on
+  restart) and goes to `BASE_URL/` if set, else `https://<host>[:port]/`.
+  Outside setup mode (checked per request) every HTTP request gets 302 to
+  `BASE_URL<path>` if set, else 301 to `https://<host>[:HTTPS_PORT]<path>`.
+- `BASE_URL` on HTTPS (outside setup mode): a page load (GET/HEAD, not
+  `/api/*`, path without extension or `.html`, `Sec-Fetch-Dest` missing or
+  `document`) on a host other than the `BASE_URL` host gets 302 to
+  `BASE_URL<path>`. 302, not 301, so a wrong value is not cached by browsers.
+  Not redirected: `/api/*` (answers as usual on every known host, no silent
+  redirect of POSTs or fetches), `/ws` (same), assets (so a page opened with
+  the escape below still loads). Escape when `BASE_URL` is wrong: open
+  `https://<IP>[:port]/?nobase` (skips the redirect for that page load), sign
+  in as admin and fix it. ENV `BASE_URL` cannot override a saved value; last
+  resort: remove the key from `DATA_DIR/settings.json` and restart.
 - HTTPS same-origin checks require an `https:` origin.
 - `POST /api/login` `{role:"parent"|"child"|"admin", pin}` -> cookie
   `bp_session` = `role.issued.hmac`, HttpOnly, Secure, SameSite=Strict, 90

@@ -136,7 +136,8 @@ function plainField(st) {
     control = st.type === 'names' ? textInput(id, st.value.join(', ')) : textArea(id, st.value.join('\n'));
     get = () => control.value;
   } else {
-    control = textInput(id, st.value, st.type === 'url' ? { inputmode: 'url' } : {});
+    const opts = st.type === 'url' ? { inputmode: 'url' } : st.type === 'baseurl' ? { inputmode: 'url', placeholder: 'https://baby.example.ch' } : {};
+    control = textInput(id, st.value, opts);
     get = () => control.value.trim();
   }
   const s = shell(st, control, { id });

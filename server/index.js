@@ -16,7 +16,7 @@ import { Hub } from './hub.js';
 import { webhookStartup } from './webhooks.js';
 import {
   SECURITY_HEADERS, adminCookie, beginAttempt, endAttempt, checkPin, clearAdminCookie, clearCookie, hostWithoutPort, ipAllowed, isAdmin,
-  knownHost, makeSession, normalizeIp, pinHash, roleFromRequest, sessionCookie, setupMode,
+  baseHost, knownHost, makeSession, normalizeIp, pinHash, roleFromRequest, sessionCookie, setupMode,
 } from './security.js';
 
 const PUBLIC_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'public');
@@ -157,7 +157,7 @@ function kickRoles(roles) {
 async function saveInput(req, res, ip, setup) {
   const body = await readJson(req, MAX_SETTINGS_BODY);
   if (body === undefined) return sendJson(res, 400, { error: 'bad request' });
-  const r = await buildChanges(body?.values, { setup, ip });
+  const r = await buildChanges(body?.values, { setup, ip, host: req.headers.host });
   if (r.errors) return sendJson(res, 400, { error: 'invalid', errors: r.errors });
   if (setup && !setupMode()) return sendJson(res, 409, { error: 'not in setup' });
   try {
@@ -174,7 +174,7 @@ async function saveInput(req, res, ip, setup) {
   if (!plain && (setup || r.pinRoles.includes('admin'))) headers['Set-Cookie'] = adminCookie(makeSession('admin'));
   log(`settings: ${setup ? 'setup finished' : 'changed by admin'} from ${ip}${plain ? ' (plain http)' : ''}`);
   const pending = restartPending();
-  const out = { ok: true, changed: Object.keys(r.changes), restartPending: pending };
+  const out = { ok: true, changed: Object.keys(r.changes), restartPending: pending, baseUrl: config.baseUrl || '' };
   if (plain) {
     // The browser continues on HTTPS; restart first if TLS settings changed.
     out.httpsPort = effective('HTTPS_PORT');
@@ -350,10 +350,46 @@ function guard(req, res) {
     return null;
   }
   if (!knownHost(req.headers.host, certs.names())) {
-    send(res, 421, 'Misdirected Request');
+    // A redirect to the fixed BASE_URL reveals nothing, so unknown hosts get it too
+    if (config.baseUrl && (isPlain(req) || pageRequest(req))) redirectToBase(req, res);
+    else send(res, 421, 'Misdirected Request');
     return null;
   }
   return ip;
+}
+
+function requestPath(req) {
+  try {
+    return new URL(req.url, 'https://x');
+  } catch {
+    return null;
+  }
+}
+
+// Top-level page load (not API, asset or fetch); only these follow BASE_URL over HTTPS.
+function pageRequest(req) {
+  if (req.method !== 'GET' && req.method !== 'HEAD') return false;
+  const u = requestPath(req);
+  if (!u || u.pathname === '/api' || u.pathname.startsWith('/api/')) return false;
+  const ext = path.extname(u.pathname).toLowerCase();
+  if (ext && ext !== '.html') return false;
+  const dest = req.headers['sec-fetch-dest'];
+  return !dest || dest === 'document';
+}
+
+// HTTPS page opened on another host than BASE_URL (e.g. the IP). '?nobase' skips
+// the redirect for that page load (escape when BASE_URL is wrong); API requests and
+// the WebSocket keep working on every known host.
+function wrongBaseHost(req) {
+  if (!config.baseUrl || setupMode() || !pageRequest(req)) return false;
+  if (hostWithoutPort(req.headers.host) === baseHost()) return false;
+  return !requestPath(req)?.searchParams.has('nobase');
+}
+
+// 302, not 301: a wrong BASE_URL must not stay cached in browsers.
+function redirectToBase(req, res) {
+  const target = String(req.url || '/').startsWith('/') ? req.url : '/';
+  send(res, 302, '', { Location: `${config.baseUrl}${target}` });
 }
 
 // API endpoints the first-start wizard needs; only these work over plain HTTP.
@@ -364,7 +400,8 @@ async function onRequest(req, res) {
   const ip = guard(req, res);
   if (!ip) return;
   // Plain HTTP: only the wizard while in setup mode, otherwise redirect to HTTPS
-  if (isPlain(req) && !setupMode()) return redirectToHttps(req, res);
+  if (isPlain(req) && !setupMode()) return config.baseUrl ? redirectToBase(req, res) : redirectToHttps(req, res);
+  if (wrongBaseHost(req)) return redirectToBase(req, res);
   let pathname;
   try {
     pathname = new URL(req.url, 'https://x').pathname;
@@ -474,6 +511,7 @@ async function main() {
   });
   log(`https: listening on ${config.httpsPort}`);
   log(`access: allowed networks ${config.allowedCidrs.join(', ')}`);
+  if (config.baseUrl) log(`http: BASE_URL ${config.baseUrl} (page requests on other hosts are redirected)`);
   if (setupMode()) log('setup: PINs missing, first-start wizard active (open the page in a browser)');
   else if (!pinHash('admin')) log('setup: ADMIN_PIN not set, set it under Einstellungen with the parent PIN');
 
