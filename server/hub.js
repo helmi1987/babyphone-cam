@@ -183,7 +183,11 @@ export class Hub {
         for (const a of this.alarms.values()) this.send(conn, { t: 'alarm', ...this.alarmPayload(a) });
       });
     }
-    return { rtpCapabilities: this.media.rtpCapabilities, soundThreshold: this.soundThresholdOf(deviceId) };
+    return {
+      rtpCapabilities: this.media.rtpCapabilities,
+      soundThreshold: this.soundThresholdOf(deviceId),
+      motionThreshold: this.motionThresholdOf(deviceId),
+    };
   }
 
   // Same deviceId joined again from another socket: drop the old one silently.
@@ -349,6 +353,7 @@ export class Hub {
       mode: c.mode,
       facing: c.facing || null,
       soundThreshold: this.soundThresholdOf(c.deviceId),
+      motionThreshold: this.motionThresholdOf(c.deviceId),
       online: c.online,
       since: c.since,
       lastSeen: c.lastSeen,
@@ -405,26 +410,36 @@ export class Hub {
   }
 
   soundThresholdOf(deviceId) {
-    return this.thresholds[deviceId] ?? config.soundThreshold;
+    return this.thresholds[deviceId]?.sound ?? config.soundThreshold;
   }
 
-  // Parent sets the sound threshold of one child; kept in DATA_DIR across restarts
+  motionThresholdOf(deviceId) {
+    return this.thresholds[deviceId]?.motion ?? config.motionThreshold;
+  }
+
+  // Parent sets sound and/or motion threshold of one child; kept in DATA_DIR across restarts
   setThreshold(conn, m) {
     if (conn.role !== 'parent') fail('parent only');
     const deviceId = String(m.deviceId ?? '');
     const child = this.children.get(deviceId);
     if (!child) fail('unknown child');
-    const sound = Math.max(0, Math.min(100, Math.round(Number(m.sound))));
-    if (!Number.isFinite(sound)) fail('invalid threshold');
-    if (this.thresholds[deviceId] === sound) return null;
-    this.thresholds[deviceId] = sound;
+    const cur = { sound: this.soundThresholdOf(deviceId), motion: this.motionThresholdOf(deviceId) };
+    const next = { ...cur };
+    for (const k of ['sound', 'motion']) {
+      if (m[k] === undefined) continue;
+      const v = Math.round(Number(m[k]));
+      if (!Number.isFinite(v) || v < 0 || v > 100) fail('invalid threshold');
+      next[k] = v;
+    }
+    if (next.sound === cur.sound && next.motion === cur.motion) return null;
+    this.thresholds[deviceId] = next;
     try {
       fs.writeFileSync(this.thresholdFile, JSON.stringify(this.thresholds));
     } catch (e) {
       log(`thresholds: cannot store (${e.code || e.message})`);
     }
-    if (child.conn) this.send(child.conn, { t: 'threshold', sound });
-    log(`threshold of ${JSON.stringify(child.name)} set to ${sound}`);
+    if (child.conn) this.send(child.conn, { t: 'threshold', ...next });
+    log(`thresholds of ${JSON.stringify(child.name)}: sound ${next.sound}, motion ${next.motion}`);
     this.broadcastDevices();
     return null;
   }
@@ -599,7 +614,15 @@ function loadThresholds(file) {
   try {
     const data = JSON.parse(fs.readFileSync(file, 'utf8'));
     const out = {};
-    for (const [k, v] of Object.entries(data)) if (Number.isInteger(v) && v >= 0 && v <= 100) out[k] = v;
+    const ok = (v) => Number.isInteger(v) && v >= 0 && v <= 100;
+    for (const [k, v] of Object.entries(data)) {
+      if (ok(v)) out[k] = { sound: v }; // old format: sound only
+      else if (v && typeof v === 'object') {
+        out[k] = {};
+        if (ok(v.sound)) out[k].sound = v.sound;
+        if (ok(v.motion)) out[k].motion = v.motion;
+      }
+    }
     return out;
   } catch {
     return {};

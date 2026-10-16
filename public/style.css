@@ -415,3 +415,4 @@ button.small { padding: 0 12px; }
 .bar-actions { display: flex; gap: 8px; align-items: center; }
 .bar-actions .selected { border-color: var(--ok); color: var(--ok); }
 .tile.unfocused { display: none; }
+.thr .thr-title { width: 5.5em; }

@@ -111,20 +111,20 @@ Client -> server (requests):
 | `ackAlarm` | parent only: `alarmId` | – |
 | `setFacing` | child only: `facing:"user"\|"environment"` | – |
 | `switchCamera` | parent only: `deviceId` (cam child) | – |
-| `setThreshold` | parent only: `deviceId, sound:0..100` (stored in `DATA_DIR/thresholds.json`) | – |
+| `setThreshold` | parent only: `deviceId, sound?:0..100, motion?:0..100` (stored in `DATA_DIR/thresholds.json`) | – |
 | `leave` | – | – (child: removed at once, no alarm) |
 
 Server -> client (push):
 
 | t | To | Fields |
 |---|---|---|
-| `devices` | parents | `list:[{deviceId, name, mode, facing, soundThreshold, online, since, lastSeen, producers:[{id, kind, source}], sound, motion, level}]` (on every change; `level` throttled to 2/s) |
+| `devices` | parents | `list:[{deviceId, name, mode, facing, soundThreshold, motionThreshold, online, since, lastSeen, producers:[{id, kind, source}], sound, motion, level}]` (on every change; `level` throttled to 2/s) |
 | `alarm` | parents | `{alarmId, deviceId, name, reason:"child_offline", since}` |
 | `alarmCleared` | parents | `{alarmId}` (acked by any parent, or child back online) |
 | `talk` | one child | `{producerId}` consume and play |
 | `talkEnd` | one child | `{producerId}` |
 | `switchCamera` | one child | – (flip front/rear, then `setFacing`) |
-| `threshold` | one child | `{sound}` new sound threshold (also in `join` reply) |
+| `threshold` | one child | `{sound, motion}` (also in `join` reply) |
 
 Media:
 - Child cam: video (simulcast 2 layers: `scaleResolutionDownBy:4,
