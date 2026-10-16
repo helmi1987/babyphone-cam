@@ -6,7 +6,7 @@
 import { h, mediaAvailable } from './dom.js';
 import { setLang, t } from './i18n.js';
 import { getConfig, login, logout } from './api.js';
-import { installAudioUnlock, unlockAudio } from './alarm.js';
+import { installAudioUnlock, unlockAudio, setAudioSession } from './alarm.js';
 import { installBox } from './install.js';
 import { mountChild } from './child.js';
 import { mountParent } from './parent.js';
@@ -105,6 +105,9 @@ function renderPin(role) {
   };
   const submit = async () => {
     if (busy || !pin) return;
+    // iOS: the session type must be set before the AudioContext starts; switching it
+    // while the context runs leaves the parent page silent until a reload.
+    if (role === 'parent') setAudioSession('playback');
     unlockAudio(); // gesture: unlocks autoplay for later alarm/child audio
     busy = true;
     okBtn.disabled = true;
