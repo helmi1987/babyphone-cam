@@ -3,7 +3,7 @@
 
 // Settings state for the browser (without secrets), input validation and tests.
 
-import { effective, infra, restartPending, sourceOf } from './config.js';
+import { effective, infra, log, restartPending, sourceOf } from './config.js';
 import { certFacts, certwardenFetch } from './certs.js';
 import { hashPin, pinHash, pinSource, setupMode, verifyHash } from './security.js';
 import { FIELD, FIELDS, PIN_KEYS, WEBHOOK_EVENTS, ipInCidrs, parseCidr, parseField } from './settings.js';
@@ -168,7 +168,10 @@ export async function buildChanges(values, { setup, ip }) {
       const role = ROLE_OF[f.key];
       if (pinSource(role) === 'env') changes[f.key] = pinHash(role);
     } else if (sourceOf(f.key) === 'env') {
-      changes[f.key] = effective(f.key);
+      // Same strict check as loadStored, so an adopted value is not dropped at the next start
+      const r = parseField(f, effective(f.key));
+      if (r.error) log(`settings: not adopting ${f.key} from ENV, invalid for settings.json`);
+      else changes[f.key] = r.value;
     }
   }
   return { changes, pinRoles: Object.keys(newPins) };
