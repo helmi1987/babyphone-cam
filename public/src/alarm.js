@@ -19,6 +19,17 @@ export function getAudioContext() {
 }
 
 // Must be called synchronously inside a user gesture handler.
+// iOS Safari plays Web Audio as "ambient" by default, so the silent switch mutes it.
+// 'playback' ignores the switch; 'play-and-record' while the microphone is in use.
+// Audio Session API: Safari 17+, a no-op elsewhere.
+export function setAudioSession(type) {
+  try {
+    if (navigator.audioSession && navigator.audioSession.type !== type) navigator.audioSession.type = type;
+  } catch (e) {
+    console.warn('audio session', e);
+  }
+}
+
 export function unlockAudio() {
   const c = getAudioContext();
   if (c && c.state !== 'running') c.resume().catch(() => {});
