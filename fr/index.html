@@ -153,7 +153,7 @@
           <figcaption>Vue agrandie d'un enfant</figcaption>
         </figure>
         <figure class="shot shot-wide">
-          <a class="zoom" href="../assets/img/shots/wizard-en.webp" aria-label="Agrandir l'image: Assistant de configuration au premier démarrage"><img src="../assets/img/shots/wizard-en.webp" width="680" height="450" alt="Assistant de configuration, étape 4 sur 7 : HTTPS avec les options Folder, Cert Warden et Self-signed." loading="lazy" decoding="async"></a>
+          <a class="zoom" href="../assets/img/shots/wizard-en.webp" aria-label="Agrandir l'image: Assistant de configuration au premier démarrage"><img src="../assets/img/shots/wizard-en.webp" width="680" height="484" alt="Assistant de configuration, étape 1 sur 8 : langue avec les options Automatique, Deutsch, English, Italiano et Français." loading="lazy" decoding="async"></a>
           <figcaption>Assistant de configuration au premier démarrage</figcaption>
         </figure>
         <figure class="shot shot-wide">
@@ -202,7 +202,7 @@
           <ol class="steps">
             <li>Reprendre compose.yaml et .env.example du dépôt ; définir au moins l'IP du conteneur (BABYPHONE_IP) et le dossier des certificats (CERTS_DIR).</li>
             <li>Démarrer le conteneur, p. ex. avec <code>docker compose up -d</code> ou comme nouvelle stack dans le Compose Manager d'Unraid.</li>
-            <li>Ouvrir <code>https://&lt;IP ou nom&gt;/</code> dans le navigateur. L'assistant demande les PIN, les prénoms des enfants, HTTPS, les alarmes et les webhooks.</li>
+            <li>Ouvrir <code>https://&lt;IP ou nom&gt;/</code> dans le navigateur. L'assistant demande la langue, les PIN, les prénoms des enfants, HTTPS, les alarmes et les webhooks.</li>
             <li>Sur l'appareil enfant, choisir le rôle enfant ; sur l'appareil parents, le rôle parents – chacun avec son PIN.</li>
           </ol>
           <h3 id="req-title">Prérequis</h3>
@@ -249,7 +249,7 @@ networks:
         <details><summary>Quelque chose est-il stocké ou enregistré ?</summary><p>Non. La vidéo et le son ne sont relayés qu'en direct. Seuls les réglages sont stockés, les PIN uniquement sous forme de hash.</p></details>
         <details><summary>À quoi faut-il faire attention sur l'appareil enfant ?</summary><p>Garder la page au premier plan, l'écran déverrouillé et l'appareil branché. Verrouiller ou changer d'app arrête caméra et micro (iOS, Android). Les écrans LCD restent rétroéclairés, seuls les OLED deviennent vraiment noirs.</p></details>
         <details><summary>Sur quels appareils a-t-il été testé ?</summary><p>L'app est conçue pour les navigateurs actuels (Chrome, Firefox, Safari, Edge). Les tests sur de vrais appareils iOS et Android sont encore à faire.</p></details>
-        <details><summary>Dans quelles langues l'app est-elle disponible ?</summary><p>L'interface de l'app existe en allemand et en anglais, selon la langue du navigateur.</p></details>
+        <details><summary>Dans quelles langues l'app est-elle disponible ?</summary><p>Allemand, anglais, italien et français. Réglable dans l'assistant de configuration ou dans les paramètres ; « Automatique » utilise la langue du navigateur, sinon l'anglais.</p></details>
         <details><summary>Combien ça coûte ?</summary><p>Rien. babyphone-cam est open source sous licence AGPL-3.0.</p></details>
       </div>
     </section>

@@ -21,7 +21,7 @@ const T = JSON.parse(fs.readFileSync(path.join(SRC, 'i18n.json'), 'utf8'));
 const SHOT_SIZE = {
   parent: [1280, 800], enlarged: [1280, 800], 'parent-phone': [390, 844],
   start: [780, 1688], child: [780, 1688], 'child-running': [780, 1688],
-  wizard: [680, 450], settings: [680, 800],
+  wizard: [680, 484], settings: [680, 800],
 };
 const PHONE = new Set(['parent-phone', 'start', 'child', 'child-running']);
 

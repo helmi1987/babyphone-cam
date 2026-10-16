@@ -153,7 +153,7 @@
           <figcaption>Vista ingrandita di un bambino</figcaption>
         </figure>
         <figure class="shot shot-wide">
-          <a class="zoom" href="../assets/img/shots/wizard-en.webp" aria-label="Ingrandisci immagine: Procedura guidata al primo avvio"><img src="../assets/img/shots/wizard-en.webp" width="680" height="450" alt="Procedura guidata passo 4 di 7: HTTPS con le opzioni Folder, Cert Warden e Self-signed." loading="lazy" decoding="async"></a>
+          <a class="zoom" href="../assets/img/shots/wizard-en.webp" aria-label="Ingrandisci immagine: Procedura guidata al primo avvio"><img src="../assets/img/shots/wizard-en.webp" width="680" height="484" alt="Procedura guidata passo 1 di 8: lingua con le opzioni Automatica, Deutsch, English, Italiano e Français." loading="lazy" decoding="async"></a>
           <figcaption>Procedura guidata al primo avvio</figcaption>
         </figure>
         <figure class="shot shot-wide">
@@ -202,7 +202,7 @@
           <ol class="steps">
             <li>Prendi compose.yaml e .env.example dal repository; imposta almeno l'IP del container (BABYPHONE_IP) e la cartella dei certificati (CERTS_DIR).</li>
             <li>Avvia il container, ad es. con <code>docker compose up -d</code> o come nuovo stack nel Compose Manager di Unraid.</li>
-            <li>Apri <code>https://&lt;IP o nome&gt;/</code> nel browser. La procedura guidata chiede PIN, nomi dei bambini, HTTPS, allarmi e webhook.</li>
+            <li>Apri <code>https://&lt;IP o nome&gt;/</code> nel browser. La procedura guidata chiede lingua, PIN, nomi dei bambini, HTTPS, allarmi e webhook.</li>
             <li>Sul dispositivo del bambino scegli il ruolo bambino, su quello dei genitori il ruolo genitori – ognuno con il proprio PIN.</li>
           </ol>
           <h3 id="req-title">Requisiti</h3>
@@ -249,7 +249,7 @@ networks:
         <details><summary>Viene salvato o registrato qualcosa?</summary><p>No. Video e audio vengono solo inoltrati in diretta. Vengono salvate le impostazioni, i PIN solo come hash.</p></details>
         <details><summary>A cosa fare attenzione sul dispositivo del bambino?</summary><p>Tenere la pagina in primo piano, lo schermo sbloccato e il dispositivo collegato alla corrente. Bloccare lo schermo o cambiare app ferma camera e microfono (iOS, Android). Gli schermi LCD restano retroilluminati, solo gli OLED diventano davvero neri.</p></details>
         <details><summary>Su quali dispositivi è stato testato?</summary><p>L'app è pensata per browser attuali (Chrome, Firefox, Safari, Edge). I test su veri dispositivi iOS e Android sono ancora in sospeso.</p></details>
-        <details><summary>In quali lingue è disponibile l'app?</summary><p>L'interfaccia dell'app è disponibile in tedesco e inglese, in base alla lingua del browser.</p></details>
+        <details><summary>In quali lingue è disponibile l'app?</summary><p>Tedesco, inglese, italiano e francese. Si imposta nella procedura guidata o nelle impostazioni; «Automatica» usa la lingua del browser, altrimenti l'inglese.</p></details>
         <details><summary>Quanto costa?</summary><p>Niente. babyphone-cam è open source con licenza AGPL-3.0.</p></details>
       </div>
     </section>

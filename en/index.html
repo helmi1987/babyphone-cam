@@ -153,7 +153,7 @@
           <figcaption>Enlarged view of one child</figcaption>
         </figure>
         <figure class="shot shot-wide">
-          <a class="zoom" href="../assets/img/shots/wizard-en.webp" aria-label="Enlarge image: Setup wizard on first start"><img src="../assets/img/shots/wizard-en.webp" width="680" height="450" alt="Setup wizard step 4 of 7: HTTPS with the options Folder, Cert Warden and Self-signed." loading="lazy" decoding="async"></a>
+          <a class="zoom" href="../assets/img/shots/wizard-en.webp" aria-label="Enlarge image: Setup wizard on first start"><img src="../assets/img/shots/wizard-en.webp" width="680" height="484" alt="Setup wizard step 1 of 8: Language with the options Automatic, Deutsch, English, Italiano and Français." loading="lazy" decoding="async"></a>
           <figcaption>Setup wizard on first start</figcaption>
         </figure>
         <figure class="shot shot-wide">
@@ -202,7 +202,7 @@
           <ol class="steps">
             <li>Take compose.yaml and .env.example from the repository; set at least the container IP (BABYPHONE_IP) and the certificate folder (CERTS_DIR).</li>
             <li>Start the container, e.g. with <code>docker compose up -d</code> or as a new stack in Unraid's Compose Manager.</li>
-            <li>Open <code>https://&lt;IP or name&gt;/</code> in a browser. The setup wizard asks for PINs, child names, HTTPS, alarms and webhooks.</li>
+            <li>Open <code>https://&lt;IP or name&gt;/</code> in a browser. The setup wizard asks for language, PINs, child names, HTTPS, alarms and webhooks.</li>
             <li>Pick “Child” on the child device and “Parents” on the parent device – each with its PIN.</li>
           </ol>
           <h3 id="req-title">Requirements</h3>
@@ -249,7 +249,7 @@ networks:
         <details><summary>Is anything stored or recorded?</summary><p>No. Video and sound are only forwarded live. Settings are stored, PINs only as hashes.</p></details>
         <details><summary>What should I watch out for on the child device?</summary><p>Keep the page in the foreground, the screen unlocked and the device on power. Locking or switching apps stops camera and microphone (iOS, Android). LCD screens keep their backlight; only OLED goes truly dark.</p></details>
         <details><summary>Which devices has it been tested on?</summary><p>The app is designed for current browsers (Chrome, Firefox, Safari, Edge). Tests on real iOS and Android devices are still pending.</p></details>
-        <details><summary>Which languages does the app support?</summary><p>The app interface is available in German and English, depending on the browser language.</p></details>
+        <details><summary>Which languages does the app support?</summary><p>German, English, Italian and French. Set it in the setup wizard or under Settings; “Automatic” uses the browser language, otherwise English.</p></details>
         <details><summary>What does it cost?</summary><p>Nothing. babyphone-cam is open source under the AGPL-3.0 licence.</p></details>
       </div>
     </section>

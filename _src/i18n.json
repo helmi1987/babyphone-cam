@@ -54,7 +54,7 @@
       { "img": "start", "cap": "Startseite: Rolle wählen", "alt": "Startseite auf dem Handy mit Logo und den Tasten Kind und Eltern sowie Einstellungen." },
       { "img": "child", "cap": "Kindgerät: Name, Modus, Kamera", "alt": "Kindgerät auf dem Handy: Name Mia gewählt, Modus Kamera, Frontkamera, Taste Starten." },
       { "img": "child-running", "cap": "Kindgerät läuft: Bildschirm dunkel", "alt": "Laufendes Kindgerät: schwarzer Bildschirm, unten das Menü mit Verbunden, Kamera wechseln und Beenden." },
-      { "img": "wizard", "cap": "Einrichtungsassistent beim ersten Start", "alt": "Einrichtungsassistent Schritt 4 von 7: HTTPS mit den Optionen Ordner, Cert Warden und Selbst signiert." },
+      { "img": "wizard", "cap": "Einrichtungsassistent beim ersten Start", "alt": "Einrichtungsassistent Schritt 1 von 8: Sprache mit den Optionen Automatisch, Deutsch, English, Italiano und Français." },
       { "img": "settings", "cap": "Einstellungen mit Admin-PIN", "alt": "Einstellungsseite: Admin-PIN, PIN Eltern und PIN Kind, jeweils mit Herkunft des Werts." }
     ],
     "zoom": "Bild vergrössern",
@@ -72,7 +72,7 @@
     "steps": [
       "compose.yaml und .env.example aus dem Repository übernehmen, mindestens die IP des Containers (BABYPHONE_IP) und den Zertifikatsordner (CERTS_DIR) setzen.",
       "Container starten, z. B. mit <code>docker compose up -d</code> oder als neuen Stack im Unraid Compose Manager.",
-      "Im Browser <code>https://&lt;IP oder Name&gt;/</code> öffnen. Der Einrichtungsassistent fragt nach PINs, Kindernamen, HTTPS, Alarmen und Webhooks.",
+      "Im Browser <code>https://&lt;IP oder Name&gt;/</code> öffnen. Der Einrichtungsassistent fragt nach Sprache, PINs, Kindernamen, HTTPS, Alarmen und Webhooks.",
       "Am Kindgerät «Kind» wählen, am Elterngerät «Eltern» – jeweils mit dem passenden PIN."
     ],
     "fullFile": "Vollständige compose.yaml auf GitHub",
@@ -91,7 +91,7 @@
       { "q": "Wird etwas gespeichert oder aufgezeichnet?", "a": "Nein. Bild und Ton werden nur live weitergeleitet. Gespeichert werden Einstellungen, PINs nur als Hash." },
       { "q": "Worauf muss ich beim Kindgerät achten?", "a": "Die Seite im Vordergrund lassen, den Bildschirm nicht sperren und das Gerät ans Ladegerät hängen. Sperren oder App-Wechsel stoppt Kamera und Mikrofon (iOS, Android). LCD-Bildschirme bleiben beleuchtet, nur OLED wird wirklich dunkel." },
       { "q": "Auf welchen Geräten wurde es getestet?", "a": "Die App ist für aktuelle Browser (Chrome, Firefox, Safari, Edge) ausgelegt. Tests auf echten iOS- und Android-Geräten stehen noch aus." },
-      { "q": "In welchen Sprachen gibt es die App?", "a": "Die Oberfläche der App gibt es auf Deutsch und Englisch, je nach Browsersprache." },
+      { "q": "In welchen Sprachen gibt es die App?", "a": "Deutsch, Englisch, Italienisch und Französisch. Einstellbar im Einrichtungsassistenten oder unter Einstellungen; «Automatisch» nimmt die Browsersprache, sonst Englisch." },
       { "q": "Was kostet es?", "a": "Nichts. babyphone-cam ist Open Source unter der Lizenz AGPL-3.0." }
     ],
     "footerLicense": "Lizenz: AGPL-3.0",
@@ -154,7 +154,7 @@
       { "img": "start", "cap": "Start page: pick a role", "alt": "Start page on a phone with the logo, the buttons Child and Parents, and Settings." },
       { "img": "child", "cap": "Child device: name, mode, camera", "alt": "Child device on a phone: name Mia selected, mode Camera, front camera, Start button." },
       { "img": "child-running", "cap": "Child device running: screen dark", "alt": "Running child device: black screen with the menu at the bottom showing Connected, Switch camera and Stop." },
-      { "img": "wizard", "cap": "Setup wizard on first start", "alt": "Setup wizard step 4 of 7: HTTPS with the options Folder, Cert Warden and Self-signed." },
+      { "img": "wizard", "cap": "Setup wizard on first start", "alt": "Setup wizard step 1 of 8: Language with the options Automatic, Deutsch, English, Italiano and Français." },
       { "img": "settings", "cap": "Settings behind the admin PIN", "alt": "Settings page: admin PIN, parent PIN and child PIN, each showing where its value comes from." }
     ],
     "zoom": "Enlarge image",
@@ -172,7 +172,7 @@
     "steps": [
       "Take compose.yaml and .env.example from the repository; set at least the container IP (BABYPHONE_IP) and the certificate folder (CERTS_DIR).",
       "Start the container, e.g. with <code>docker compose up -d</code> or as a new stack in Unraid's Compose Manager.",
-      "Open <code>https://&lt;IP or name&gt;/</code> in a browser. The setup wizard asks for PINs, child names, HTTPS, alarms and webhooks.",
+      "Open <code>https://&lt;IP or name&gt;/</code> in a browser. The setup wizard asks for language, PINs, child names, HTTPS, alarms and webhooks.",
       "Pick “Child” on the child device and “Parents” on the parent device – each with its PIN."
     ],
     "fullFile": "Full compose.yaml on GitHub",
@@ -191,7 +191,7 @@
       { "q": "Is anything stored or recorded?", "a": "No. Video and sound are only forwarded live. Settings are stored, PINs only as hashes." },
       { "q": "What should I watch out for on the child device?", "a": "Keep the page in the foreground, the screen unlocked and the device on power. Locking or switching apps stops camera and microphone (iOS, Android). LCD screens keep their backlight; only OLED goes truly dark." },
       { "q": "Which devices has it been tested on?", "a": "The app is designed for current browsers (Chrome, Firefox, Safari, Edge). Tests on real iOS and Android devices are still pending." },
-      { "q": "Which languages does the app support?", "a": "The app interface is available in German and English, depending on the browser language." },
+      { "q": "Which languages does the app support?", "a": "German, English, Italian and French. Set it in the setup wizard or under Settings; “Automatic” uses the browser language, otherwise English." },
       { "q": "What does it cost?", "a": "Nothing. babyphone-cam is open source under the AGPL-3.0 licence." }
     ],
     "footerLicense": "Licence: AGPL-3.0",
@@ -254,7 +254,7 @@
       { "img": "start", "cap": "Pagina iniziale: scegliere il ruolo", "alt": "Pagina iniziale su un telefono con il logo, i pulsanti Child e Parents e Settings." },
       { "img": "child", "cap": "Dispositivo bambino: nome, modalità, camera", "alt": "Dispositivo bambino su un telefono: nome Mia selezionato, modalità Camera, fotocamera frontale, pulsante Start." },
       { "img": "child-running", "cap": "Dispositivo bambino attivo: schermo scuro", "alt": "Dispositivo bambino in funzione: schermo nero, in basso il menu con Connected, Switch camera e Stop." },
-      { "img": "wizard", "cap": "Procedura guidata al primo avvio", "alt": "Procedura guidata passo 4 di 7: HTTPS con le opzioni Folder, Cert Warden e Self-signed." },
+      { "img": "wizard", "cap": "Procedura guidata al primo avvio", "alt": "Procedura guidata passo 1 di 8: lingua con le opzioni Automatica, Deutsch, English, Italiano e Français." },
       { "img": "settings", "cap": "Impostazioni protette dal PIN admin", "alt": "Pagina impostazioni: PIN admin, PIN genitori e PIN bambino, ciascuno con l'origine del valore." }
     ],
     "zoom": "Ingrandisci immagine",
@@ -272,7 +272,7 @@
     "steps": [
       "Prendi compose.yaml e .env.example dal repository; imposta almeno l'IP del container (BABYPHONE_IP) e la cartella dei certificati (CERTS_DIR).",
       "Avvia il container, ad es. con <code>docker compose up -d</code> o come nuovo stack nel Compose Manager di Unraid.",
-      "Apri <code>https://&lt;IP o nome&gt;/</code> nel browser. La procedura guidata chiede PIN, nomi dei bambini, HTTPS, allarmi e webhook.",
+      "Apri <code>https://&lt;IP o nome&gt;/</code> nel browser. La procedura guidata chiede lingua, PIN, nomi dei bambini, HTTPS, allarmi e webhook.",
       "Sul dispositivo del bambino scegli il ruolo bambino, su quello dei genitori il ruolo genitori – ognuno con il proprio PIN."
     ],
     "fullFile": "compose.yaml completo su GitHub",
@@ -291,7 +291,7 @@
       { "q": "Viene salvato o registrato qualcosa?", "a": "No. Video e audio vengono solo inoltrati in diretta. Vengono salvate le impostazioni, i PIN solo come hash." },
       { "q": "A cosa fare attenzione sul dispositivo del bambino?", "a": "Tenere la pagina in primo piano, lo schermo sbloccato e il dispositivo collegato alla corrente. Bloccare lo schermo o cambiare app ferma camera e microfono (iOS, Android). Gli schermi LCD restano retroilluminati, solo gli OLED diventano davvero neri." },
       { "q": "Su quali dispositivi è stato testato?", "a": "L'app è pensata per browser attuali (Chrome, Firefox, Safari, Edge). I test su veri dispositivi iOS e Android sono ancora in sospeso." },
-      { "q": "In quali lingue è disponibile l'app?", "a": "L'interfaccia dell'app è disponibile in tedesco e inglese, in base alla lingua del browser." },
+      { "q": "In quali lingue è disponibile l'app?", "a": "Tedesco, inglese, italiano e francese. Si imposta nella procedura guidata o nelle impostazioni; «Automatica» usa la lingua del browser, altrimenti l'inglese." },
       { "q": "Quanto costa?", "a": "Niente. babyphone-cam è open source con licenza AGPL-3.0." }
     ],
     "footerLicense": "Licenza: AGPL-3.0",
@@ -354,7 +354,7 @@
       { "img": "start", "cap": "Page d'accueil : choisir le rôle", "alt": "Page d'accueil sur un téléphone avec le logo, les boutons Child et Parents, et Settings." },
       { "img": "child", "cap": "Appareil enfant : nom, mode, caméra", "alt": "Appareil enfant sur un téléphone : nom Mia sélectionné, mode Camera, caméra avant, bouton Start." },
       { "img": "child-running", "cap": "Appareil enfant actif : écran sombre", "alt": "Appareil enfant en marche : écran noir, en bas le menu avec Connected, Switch camera et Stop." },
-      { "img": "wizard", "cap": "Assistant de configuration au premier démarrage", "alt": "Assistant de configuration, étape 4 sur 7 : HTTPS avec les options Folder, Cert Warden et Self-signed." },
+      { "img": "wizard", "cap": "Assistant de configuration au premier démarrage", "alt": "Assistant de configuration, étape 1 sur 8 : langue avec les options Automatique, Deutsch, English, Italiano et Français." },
       { "img": "settings", "cap": "Réglages protégés par le PIN admin", "alt": "Page des réglages : PIN admin, PIN parents et PIN enfant, chacun avec l'origine de sa valeur." }
     ],
     "zoom": "Agrandir l'image",
@@ -372,7 +372,7 @@
     "steps": [
       "Reprendre compose.yaml et .env.example du dépôt ; définir au moins l'IP du conteneur (BABYPHONE_IP) et le dossier des certificats (CERTS_DIR).",
       "Démarrer le conteneur, p. ex. avec <code>docker compose up -d</code> ou comme nouvelle stack dans le Compose Manager d'Unraid.",
-      "Ouvrir <code>https://&lt;IP ou nom&gt;/</code> dans le navigateur. L'assistant demande les PIN, les prénoms des enfants, HTTPS, les alarmes et les webhooks.",
+      "Ouvrir <code>https://&lt;IP ou nom&gt;/</code> dans le navigateur. L'assistant demande la langue, les PIN, les prénoms des enfants, HTTPS, les alarmes et les webhooks.",
       "Sur l'appareil enfant, choisir le rôle enfant ; sur l'appareil parents, le rôle parents – chacun avec son PIN."
     ],
     "fullFile": "compose.yaml complet sur GitHub",
@@ -391,7 +391,7 @@
       { "q": "Quelque chose est-il stocké ou enregistré ?", "a": "Non. La vidéo et le son ne sont relayés qu'en direct. Seuls les réglages sont stockés, les PIN uniquement sous forme de hash." },
       { "q": "À quoi faut-il faire attention sur l'appareil enfant ?", "a": "Garder la page au premier plan, l'écran déverrouillé et l'appareil branché. Verrouiller ou changer d'app arrête caméra et micro (iOS, Android). Les écrans LCD restent rétroéclairés, seuls les OLED deviennent vraiment noirs." },
       { "q": "Sur quels appareils a-t-il été testé ?", "a": "L'app est conçue pour les navigateurs actuels (Chrome, Firefox, Safari, Edge). Les tests sur de vrais appareils iOS et Android sont encore à faire." },
-      { "q": "Dans quelles langues l'app est-elle disponible ?", "a": "L'interface de l'app existe en allemand et en anglais, selon la langue du navigateur." },
+      { "q": "Dans quelles langues l'app est-elle disponible ?", "a": "Allemand, anglais, italien et français. Réglable dans l'assistant de configuration ou dans les paramètres ; « Automatique » utilise la langue du navigateur, sinon l'anglais." },
       { "q": "Combien ça coûte ?", "a": "Rien. babyphone-cam est open source sous licence AGPL-3.0." }
     ],
     "footerLicense": "Licence : AGPL-3.0",
