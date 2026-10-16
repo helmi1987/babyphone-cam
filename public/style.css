@@ -429,6 +429,8 @@ button.small { padding: 0 12px; }
   .segmented.n4 { grid-template-columns: repeat(4, 1fr); }
 }
 .field .seg { min-height: var(--touch); }
+/* language choice: "automatic" on its own row above the four languages */
+.segmented.lang .seg:first-child { grid-column: 1 / -1; }
 .field {
   background: var(--panel);
   border: 1px solid var(--panel-2);

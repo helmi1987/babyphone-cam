@@ -272,11 +272,12 @@ async function api(req, res, pathname, ip) {
   if (pathname.startsWith('/api/admin/')) return adminApi(req, res, pathname, ip);
   if (pathname === '/api/config') {
     if (method !== 'GET' && method !== 'HEAD') return sendJson(res, 405, { error: 'method not allowed' }, { Allow: 'GET' });
-    if (setupMode()) return sendJson(res, 200, { setup: true, role: null, admin: false });
+    if (setupMode()) return sendJson(res, 200, { setup: true, role: null, admin: false, appLanguage: config.appLanguage });
     return sendJson(res, 200, {
       role: roleFromRequest(req),
       admin: isAdmin(req),
       adminPin: Boolean(pinHash('admin')),
+      appLanguage: config.appLanguage,
       childNames: config.childNames,
       soundThreshold: config.soundThreshold,
       motionThreshold: config.motionThreshold,

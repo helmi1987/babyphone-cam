@@ -4,11 +4,12 @@
 // First-start wizard; also reachable from the settings page ("run again").
 
 import { h } from './dom.js';
-import { t } from './i18n.js';
+import { lang, setLang, t } from './i18n.js';
 import { requestJson } from './api.js';
 import { buildForm, restartBox } from './fields.js';
 
 const STEPS = [
+  { id: 'language', group: 'general' },
   { id: 'welcome' },
   { id: 'pins', group: 'pins' },
   { id: 'children', group: 'children' },
@@ -30,6 +31,8 @@ export function mountWizard(app, { mode, nav }) {
   let state = null;
   let step = 0;
   let busy = false;
+  // language shown when the wizard opened; restored when it is closed without saving
+  const startLang = lang;
   const root = h('section', { class: 'view settings wizard' });
   app.replaceChildren(root);
 
@@ -44,12 +47,22 @@ export function mountWizard(app, { mode, nav }) {
       if (r.status === 409 && setup) return location.reload();
       if (!r.ok) throw new Error(String(r.status));
       state = r.data;
-      form = buildForm(state, { api, setup, wizard: true });
+      form = buildForm(state, { api, setup, wizard: true, onLang });
       render();
     } catch {
       root.replaceChildren(h('p', { class: 'error', role: 'alert' }, t('serverError')),
         h('button', { type: 'button', onclick: load }, t('retry')));
     }
+  }
+
+  // Language step: switch at once and rebuild the form so every text uses the new language.
+  function onLang(v) {
+    const f = state.fields.find((x) => x.key === 'APP_LANGUAGE');
+    if (f) f.value = v;
+    setLang(v);
+    document.title = t('appTitle');
+    form = buildForm(state, { api, setup, wizard: true, onLang });
+    render();
   }
 
   function summary() {
@@ -82,7 +95,7 @@ export function mountWizard(app, { mode, nav }) {
     root.replaceChildren(
       h('header', { class: 'bar' },
         h('h1', null, setup ? t('w_title') : t('wizardAgain')),
-        setup ? null : h('button', { type: 'button', class: 'ghost small', onclick: () => nav.go('admin') }, t('close'))),
+        setup ? null : h('button', { type: 'button', class: 'ghost small', onclick: () => { setLang(startLang); nav.go('admin'); } }, t('close'))),
       plainHttp ? h('p', { class: 'warn insecure-hint' }, t('w_insecure')) : null,
       h('p', { class: 'muted step-count' }, t('step', { n: step + 1, total: STEPS.length })),
       h('ol', { class: 'steps' }, STEPS.map((x, i) => h('li', { class: i === step ? 'current' : i < step ? 'done' : '' }, t(`w_${x.id}`)))),

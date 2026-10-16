@@ -9,11 +9,14 @@ export const WEBHOOK_EVENTS = ['child_offline', 'child_online', 'alarm_unacked',
 export const WEBHOOK_METHODS = ['GET', 'POST', 'PUT'];
 export const MAX_WEBHOOKS = 5;
 export const TLS_SOURCES = ['auto', 'certwarden', 'folder', 'selfsigned'];
+// auto = browser language of each device (fallback English)
+export const APP_LANGUAGES = ['auto', 'de', 'en', 'it', 'fr'];
 export const DEFAULT_CIDRS = '10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,127.0.0.0/8,100.64.0.0/10,::1/128,fc00::/7,fe80::/10';
 export const PIN_KEYS = { admin: 'ADMIN_PIN', parent: 'PARENT_PIN', child: 'CHILD_PIN' };
 
 // prop: property in the running config. restart: only applied at the next start.
 export const FIELDS = [
+  { key: 'APP_LANGUAGE', group: 'general', type: 'enum', values: APP_LANGUAGES, def: 'auto', prop: 'appLanguage' },
   { key: 'ADMIN_PIN', group: 'pins', type: 'pin', secret: true },
   { key: 'PARENT_PIN', group: 'pins', type: 'pin', secret: true },
   { key: 'CHILD_PIN', group: 'pins', type: 'pin', secret: true },

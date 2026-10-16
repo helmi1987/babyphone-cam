@@ -4,7 +4,7 @@
 // Entry: routing between start, PIN, child, parent, settings and setup views.
 
 import { h, mediaAvailable } from './dom.js';
-import { t } from './i18n.js';
+import { setLang, t } from './i18n.js';
 import { getConfig, login, logout } from './api.js';
 import { installAudioUnlock, unlockAudio } from './alarm.js';
 import { mountChild } from './child.js';
@@ -16,6 +16,12 @@ const PIN_MAX = 12;
 const app = document.getElementById('app');
 let cfg = { role: null, childNames: [] };
 let view = null;
+
+// Server config; also applies the app language setting before anything renders.
+function useConfig(c) {
+  cfg = c;
+  setLang(c.appLanguage);
+}
 
 const nav = {
   go,
@@ -29,7 +35,7 @@ const nav = {
     try {
       const c = await getConfig();
       if (c.role !== role) {
-        cfg = c;
+        useConfig(c);
         go(c.role || 'start');
       }
     } catch {
@@ -103,7 +109,7 @@ function renderPin(role) {
     try {
       const r = await login(role, pin);
       if (r.ok) {
-        cfg = await getConfig();
+        useConfig(await getConfig());
         go(role === 'admin' ? 'admin' : cfg.role || role);
         return;
       }
@@ -155,7 +161,7 @@ function renderPin(role) {
 async function boot() {
   installAudioUnlock();
   try {
-    cfg = await getConfig();
+    useConfig(await getConfig());
     if (cfg.setup) go('setup');
     else go(cfg.role === 'child' || cfg.role === 'parent' ? cfg.role : 'start');
   } catch {

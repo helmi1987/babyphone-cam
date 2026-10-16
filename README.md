@@ -35,8 +35,8 @@ security updates; Dependabot opens weekly PRs for npm packages and Actions.
 Everything except infrastructure is set in the browser:
 
 - **First start:** while the parent or child PIN is missing, every page shows
-  a wizard (welcome, PINs, child names, HTTPS, alarms and detection,
-  webhooks, summary). Parent and child pages stay closed until it is saved.
+  a wizard (language, welcome, PINs, child names, HTTPS, alarms and
+  detection, webhooks, summary). Parent and child pages stay closed until it is saved.
   There is no extra protection code: run the first start in a trusted network.
   Before a trusted certificate exists the wizard also works over plain
   `http://<IP>/` (only the wizard; the page shows "Unverschlüsselte
@@ -55,6 +55,11 @@ Everything except infrastructure is set in the browser:
 - Most changes apply at once (a changed PIN signs that role out). Ports,
   announced IP and the certificate source need a restart: the page offers a
   button; the container restarts through its restart policy.
+- **Language:** `APP_LANGUAGE` = `auto` (default: each device uses its
+  browser language if it is German, English, Italian or French, otherwise
+  English) or a fixed `de`, `en`, `it`, `fr` for all devices. Chosen in the
+  first wizard step and under Einstellungen → Allgemein; also settable as ENV
+  start value.
 - Only ENV / compose: `DATA_DIR`, `CERTS_DIR`, `PUID`, `PGID`, `TZ`
   (shown read-only).
 

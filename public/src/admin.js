@@ -4,11 +4,11 @@
 // Settings page for the admin role.
 
 import { h } from './dom.js';
-import { t } from './i18n.js';
+import { setLang, t } from './i18n.js';
 import { requestJson } from './api.js';
 import { buildForm, errText, restartBox } from './fields.js';
 
-const GROUPS = ['pins', 'children', 'https', 'alarms', 'webhooks', 'network'];
+const GROUPS = ['general', 'pins', 'children', 'https', 'alarms', 'webhooks', 'network'];
 
 export function mountAdmin(app, nav) {
   const root = h('section', { class: 'view settings' });
@@ -87,6 +87,11 @@ export function mountAdmin(app, nav) {
       status.textContent = keys.length ? t('fixErrors') : t('saveFailed');
       form.widgets[keys[0]]?.el.scrollIntoView({ block: 'center' });
       return;
+    }
+    // the new language applies right away on this device; others pick it up when they load the config
+    if (r.data.changed.includes('APP_LANGUAGE')) {
+      setLang(form.widgets.APP_LANGUAGE.get());
+      document.title = t('appTitle');
     }
     await load(r.data.changed.length ? t('saved') : t('noChanges'));
   }

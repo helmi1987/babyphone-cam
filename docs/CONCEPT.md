@@ -44,6 +44,7 @@ Restart needed for: ports, `ANNOUNCED_IP`, `TLS_SOURCE`, Cert Warden and
 
 | Variable | Default | Meaning |
 |---|---|---|
+| `APP_LANGUAGE` | `auto` | App language on all devices: `auto`, `de`, `en`, `it`, `fr`. `auto` = per device first match of `navigator.languages` (`gsw` counts as `de`), else English. Live |
 | `ADMIN_PIN` | empty | PIN for the admin page (settings) |
 | `PARENT_PIN` | empty | PIN for parents; missing parent or child PIN = setup mode |
 | `CHILD_PIN` | empty | PIN for child devices; all three PINs must differ |
@@ -202,8 +203,11 @@ no_parent, test`. `test` is sent once at start when `WEBHOOK_TEST=1`.
 
 ## Browser UI
 
-- Start: two big buttons Kind / Eltern -> PIN pad -> role page. Language
-  German/English by `navigator.language`; strings in one table.
+- Start: two big buttons Kind / Eltern -> PIN pad -> role page. Languages
+  German, English, Italian, French; `APP_LANGUAGE` from `/api/config` is
+  applied before the first render (`auto` = browser language, fallback
+  English); strings in one table (`public/src/i18n.js`). Running pages pick up
+  a changed setting at their next config load (reload, login, reconnect).
 - Child: pick name (buttons from `CHILD_NAMES` + text field), mode Cam
   (video+audio, front/back toggle) or Phone (audio only), Start. Then Wake
   Lock (re-request on `visibilitychange`), black fullscreen overlay. Overlay:

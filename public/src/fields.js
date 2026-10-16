@@ -5,7 +5,7 @@
 // Secrets never come from the server: '' / undefined = unchanged, null = clear.
 
 import { h } from './dom.js';
-import { lang, t } from './i18n.js';
+import { LANG_NAMES, lang, t } from './i18n.js';
 import { requestJson } from './api.js';
 
 const MAX_HOOKS = 5;
@@ -159,6 +159,22 @@ function tlsField(st, ctx) {
     },
     summary: () => t(`tls_${seg.get()}`),
   };
+}
+
+// App language: auto + native language names. ctx.onLang (wizard) gets every change.
+function langField(st, ctx) {
+  const opts = st.values.map((v) => [v, v === 'auto' ? t('lang_auto') : LANG_NAMES[v] || v]);
+  let ready = false;
+  const seg = segmented(opts, st.value, (v) => {
+    if (ready) ctx.onLang?.(v);
+  });
+  ready = true;
+  seg.el.classList.add('lang');
+  seg.el.querySelectorAll('.seg').forEach((b, i) => {
+    if (opts[i][0] !== 'auto') b.setAttribute('lang', opts[i][0]);
+  });
+  const s = shell(st, seg.el, {});
+  return { ...s, get: seg.get, summary: () => opts.find(([v]) => v === seg.get())?.[1] || seg.get() };
 }
 
 // ---------------------------------------------------------------- webhooks
@@ -323,7 +339,7 @@ function webhooksField(st, ctx) {
 // ---------------------------------------------------------------- form
 
 // state: server answer of /api/setup/state or /api/admin/settings.
-// ctx: {api: '/api/setup' | '/api/admin', setup: bool, wizard: bool}
+// ctx: {api: '/api/setup' | '/api/admin', setup: bool, wizard: bool, onLang?: fn(setting)}
 export function buildForm(state, ctx) {
   const byKey = Object.fromEntries(state.fields.map((f) => [f.key, f]));
   const c = { ...ctx, state: byKey, events: state.events };
@@ -333,6 +349,7 @@ export function buildForm(state, ctx) {
     if (st.type === 'pin') w = pinField(st, c);
     else if (st.type === 'webhooks') w = webhooksField(st, c);
     else if (st.key === 'TLS_SOURCE') w = tlsField(st, c);
+    else if (st.key === 'APP_LANGUAGE') w = langField(st, c);
     else if (st.secret) w = secretField(st);
     else w = plainField(st);
     widgets[st.key] = { ...w, key: st.key, group: st.group, state: st };
