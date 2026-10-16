@@ -105,6 +105,8 @@ button.small { padding: 0 12px; }
 /* Start */
 .start { text-align: center; padding-top: 12vh; }
 .start .title { font-size: 2rem; margin-bottom: 8px; }
+.install { margin-top: 12px; }
+.install-help { max-width: 26rem; margin: 10px auto 0; font-size: 0.9rem; }
 .roles {
   display: grid;
   gap: 16px;

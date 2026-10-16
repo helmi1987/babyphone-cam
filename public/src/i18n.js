@@ -5,6 +5,8 @@ const strings = {
   de: {
     appTitle: 'Babyphone',
     useAs: 'Dieses Gerät verwenden als',
+    installApp: 'Als App auf den Home-Bildschirm',
+    installIosHelp: 'Im Browser das Teilen-Symbol (oder ⋯ → Teilen) antippen, dann «Zum Home-Bildschirm» und «Hinzufügen».',
     roleChild: 'Kind',
     roleParent: 'Eltern',
     pinChild: 'PIN Kind',
@@ -255,6 +257,8 @@ const strings = {
   en: {
     appTitle: 'Baby monitor',
     useAs: 'Use this device as',
+    installApp: 'Add to home screen as an app',
+    installIosHelp: 'Tap the Share icon in the browser (or ⋯ → Share), then “Add to Home Screen” and “Add”.',
     roleChild: 'Child',
     roleParent: 'Parents',
     pinChild: 'Child PIN',
@@ -505,6 +509,8 @@ const strings = {
   it: {
     appTitle: 'Baby monitor',
     useAs: 'Usa questo dispositivo come',
+    installApp: 'Aggiungi come app alla schermata Home',
+    installIosHelp: 'Nel browser tocca l’icona Condividi (o ⋯ → Condividi), poi «Aggiungi alla schermata Home» e «Aggiungi».',
     roleChild: 'Bambino',
     roleParent: 'Genitori',
     pinChild: 'PIN bambino',
@@ -755,6 +761,8 @@ const strings = {
   fr: {
     appTitle: 'Babyphone',
     useAs: 'Utiliser cet appareil comme',
+    installApp: 'Ajouter comme app à l’écran d’accueil',
+    installIosHelp: 'Dans le navigateur, touchez l’icône Partager (ou ⋯ → Partager), puis « Sur l’écran d’accueil » et « Ajouter ».',
     roleChild: 'Enfant',
     roleParent: 'Parents',
     pinChild: 'PIN enfant',
