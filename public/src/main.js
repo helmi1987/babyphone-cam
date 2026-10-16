@@ -7,7 +7,7 @@ import { h, mediaAvailable } from './dom.js';
 import { setLang, t } from './i18n.js';
 import { getConfig, login, logout } from './api.js';
 import { installAudioUnlock, unlockAudio, setAudioSession } from './alarm.js';
-import { installBox } from './install.js';
+import { installHint } from './install.js';
 import { mountChild } from './child.js';
 import { mountParent } from './parent.js';
 import { mountAdmin, mountClaim } from './admin.js';
@@ -76,7 +76,7 @@ function renderStart(error) {
     mediaAvailable() ? null : h('p', { class: 'warn' }, window.isSecureContext ? t('noMedia') : t('insecure')),
     error ? h('p', { class: 'error', role: 'alert' }, error) : null,
     h('button', { type: 'button', class: 'ghost small settings-link', onclick: openSettings }, `⚙ ${t('settings')}`),
-    installBox(),
+    installHint(),
   ));
   return null;
 }

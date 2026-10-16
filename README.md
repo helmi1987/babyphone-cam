@@ -109,9 +109,9 @@ Over WireGuard the VPN subnet must be routed to the LAN.
 - Child unit: keep the page in the foreground and the screen unlocked, on
   power. Locking the device or switching apps stops camera and microphone
   (iOS, Android).
-- Home screen app: the start screen offers "Als App auf den Home-Bildschirm"
-  (install dialog in Chrome/Edge/Android, step hint on iPhone/iPad); hidden when
-  already running as an app.
+- Home screen app: on phones the start screen shows a floating hint card
+  (install button in Chrome/Edge/Android, Share steps on iPhone/iPad, menu hint
+  elsewhere); hidden in the app, after installing and for 30 days after ×.
 - Parent unit: the page keeps the screen on (Wake Lock) while it is open.
   iPhone (Home Screen app, user test): sound keeps playing with the screen
   locked; the audio indicator shows the app icon. Other platforms not tested;
