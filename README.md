@@ -7,7 +7,9 @@ parent unit. One Docker container; video and sound run through it, nothing is
 recorded.
 
 - **Kind (child):** name from a list or free, mode **Cam** (video + sound) or
-  **Phone** (sound only). Screen goes black, the page is kept awake.
+  **Phone** (sound only). After start a preview shows the camera for
+  positioning (camera can be switched); a tap or 1 min without touch turns the
+  screen black. The page is kept awake.
 - **Eltern (parents):** all active children at once, green frame on sound or
   motion, volume per child, push-to-talk per child, alarm with tone when a
   child unit drops out (must be confirmed), webhooks (Gotify, Slack, Bark, …).
@@ -107,8 +109,9 @@ Over WireGuard the VPN subnet must be routed to the LAN.
 - Child unit: keep the page in the foreground and the screen unlocked, on
   power. Locking the device or switching apps stops camera and microphone
   (iOS, Android).
-- Parent unit: the same applies to listening; use webhooks for alerts when no
-  parent page is open.
+- Parent unit: the page keeps the screen on (Wake Lock) while it is open.
+  Locking the device or switching apps still stops listening; use webhooks for
+  alerts when no parent page is open.
 - LCD screens keep their backlight; only OLED goes truly dark.
 
 ## Licence

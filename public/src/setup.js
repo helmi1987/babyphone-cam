@@ -96,7 +96,7 @@ export function mountWizard(app, { mode, nav }) {
       h('header', { class: 'bar' },
         h('h1', null, setup ? t('w_title') : t('wizardAgain')),
         setup ? null : h('button', { type: 'button', class: 'ghost small', onclick: () => { setLang(startLang); nav.go('admin'); } }, t('close'))),
-      plainHttp ? h('p', { class: 'warn insecure-hint' }, t('w_insecure')) : null,
+      plainHttp ? h('p', { class: 'warn insecure-hint' }, t('w_insecure')) : '',
       h('p', { class: 'muted step-count' }, t('step', { n: step + 1, total: STEPS.length })),
       h('ol', { class: 'steps' }, STEPS.map((x, i) => h('li', { class: i === step ? 'current' : i < step ? 'done' : '' }, t(`w_${x.id}`)))),
       h('h2', { class: 'step-title' }, t(`w_${s.id}`)),

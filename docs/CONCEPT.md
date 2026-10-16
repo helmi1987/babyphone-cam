@@ -231,9 +231,11 @@ no_parent, test`. `test` is sent once at start when `WEBHOOK_TEST=1`.
   a changed setting at their next config load (reload, login, reconnect).
 - Child: pick name (buttons from `CHILD_NAMES` + text field), mode Cam
   (video+audio, front/back toggle) or Phone (audio only), Start. Then Wake
-  Lock (re-request on `visibilitychange`), black fullscreen overlay. Overlay:
-  double tap shows a small bar for 5 s with Beenden (sends `leave`) and a
-  hint "Bildschirm nicht sperren". Detection runs locally: audio RMS via
+  Lock (re-request on `visibilitychange`), fullscreen overlay. It starts as a
+  preview (camera picture, front camera mirrored, hint, bar with Kamera
+  wechseln and Beenden); a tap outside the bar or 60 s without touch turns it
+  black. Black overlay: double tap shows a small bar for 5 s with Vorschau,
+  Beenden (sends `leave`) and a hint "Bildschirm nicht sperren". Detection runs locally: audio RMS via
   AnalyserNode (every 200 ms), motion via 64x48 canvas frame diff (every
   500 ms, cam only); state held 3 s, sent on change, level every 500 ms.
 - Parent: grid of tiles (name, mode, online/offline since, phone active =

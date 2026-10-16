@@ -16,6 +16,7 @@ const SIMULCAST = [
 ];
 const BAR_MS = 5000;
 const DOUBLE_TAP_MS = 400;
+const PREVIEW_MS = 60000; // preview turns dark after this long without a touch
 
 export function mountChild(root, cfg, nav) {
   const myId = deviceId('bp.deviceId');
@@ -177,6 +178,7 @@ export function mountChild(root, cfg, nav) {
           return;
         }
         setStream(stream);
+        armPreview(); // count the 60 s from the first picture, not from the permission prompt
         requestWakeLock();
         r.hub = new Hub();
         r.media = new Media(r.hub);
@@ -238,6 +240,7 @@ export function mountChild(root, cfg, nav) {
     r.facing = facing;
     prefs.facing = facing;
     save('bp.facing', facing);
+    updateMirror();
     sendFacing(r);
   }
 
@@ -400,12 +403,17 @@ export function mountChild(root, cfg, nav) {
 
   async function requestWakeLock() {
     const r = run;
-    if (!r || !navigator.wakeLock || document.visibilityState !== 'visible') return;
+    if (!r || r.wakePending || !navigator.wakeLock || document.visibilityState !== 'visible') return;
     if (r.wakeLock && !r.wakeLock.released) return;
+    r.wakePending = true;
     try {
-      r.wakeLock = await navigator.wakeLock.request('screen');
+      const lock = await navigator.wakeLock.request('screen');
+      if (run !== r) lock.release().catch(() => {});
+      else r.wakeLock = lock;
     } catch (e) {
       console.warn('wake lock', e);
+    } finally {
+      r.wakePending = false;
     }
   }
 
@@ -424,12 +432,29 @@ export function mountChild(root, cfg, nav) {
         ? h('button', { type: 'button', class: 'ghost', onclick: () => { flipCamera(); showBar(); } }, t('switchCamera'))
         : null,
       h('button', { type: 'button', class: 'danger', onclick: () => stop() }, t('stop')));
+    // Preview: camera picture (cam mode) with a hint; a tap or PREVIEW_MS idle turns it dark
+    const left = h('div', { class: 'preview-left' });
+    const hint = h('div', { class: 'preview-hint' },
+      h('h2', null, r.mode === 'cam' ? t('previewTitle') : t('previewTitlePhone')),
+      h('p', null, t('previewText')),
+      left);
+    bar.insertBefore(
+      h('button', { type: 'button', class: 'ghost preview-btn', onclick: () => showPreview() }, t('preview')),
+      bar.lastChild);
     const video = h('video', { class: 'probe', muted: true, playsInline: true, autoplay: true });
     video.setAttribute('playsinline', '');
-    const overlay = h('div', { class: 'blackout' }, video, bar);
+    const overlay = h('div', { class: 'blackout' }, video, hint, bar);
     let lastTap = 0;
+    overlay.addEventListener('pointerdown', () => {
+      if (run === r && r.preview) armPreview();
+    });
     overlay.addEventListener('pointerup', (e) => {
       if (bar.contains(e.target)) return;
+      if (r.preview) {
+        lastTap = 0;
+        goDark();
+        return;
+      }
       const now = Date.now();
       if (now - lastTap < DOUBLE_TAP_MS) {
         lastTap = 0;
@@ -440,12 +465,54 @@ export function mountChild(root, cfg, nav) {
     });
     overlay.addEventListener('dblclick', (e) => e.preventDefault());
     document.body.append(overlay);
-    Object.assign(r, { overlay, bar, statusEl: status, dotEl: dot, video, barTimer: null });
+    Object.assign(r, { overlay, bar, statusEl: status, dotEl: dot, video, barTimer: null, previewLeft: left, preview: false, previewTimer: null });
+    showPreview();
+  }
+
+  function showPreview() {
+    const r = run;
+    if (!r) return;
+    r.preview = true;
+    r.overlay.classList.add('preview');
+    updateMirror();
+    clearTimeout(r.barTimer);
+    r.bar.hidden = false;
+    armPreview();
+  }
+
+  function armPreview() {
+    const r = run;
+    if (!r?.preview) return;
+    const end = Date.now() + PREVIEW_MS;
+    const tick = () => {
+      const s = Math.ceil((end - Date.now()) / 1000);
+      if (s <= 0) goDark();
+      else r.previewLeft.textContent = t('previewAuto', { s });
+    };
+    clearInterval(r.previewTimer);
+    r.previewTimer = setInterval(tick, 1000);
+    tick();
+  }
+
+  function goDark() {
+    const r = run;
+    if (!r) return;
+    r.preview = false;
+    clearInterval(r.previewTimer);
+    clearTimeout(r.barTimer);
+    r.overlay.classList.remove('preview');
+    r.bar.hidden = true;
+  }
+
+  function updateMirror() {
+    const r = run;
+    // Front camera preview mirrored like a selfie view; the sent picture is not affected
+    r?.overlay?.classList.toggle('mirror', r.mode === 'cam' && r.facing === 'user');
   }
 
   function showBar() {
     const r = run;
-    if (!r) return;
+    if (!r || r.preview) return;
     r.bar.hidden = false;
     clearTimeout(r.barTimer);
     r.barTimer = setTimeout(() => {
@@ -478,6 +545,7 @@ export function mountChild(root, cfg, nav) {
     r.stream?.getTracks().forEach((tr) => tr.stop());
     r.wakeLock?.release().catch(() => {});
     clearTimeout(r.barTimer);
+    clearInterval(r.previewTimer);
     r.overlay?.remove();
     if (document.fullscreenElement) document.exitFullscreen?.().catch(() => {});
   }
