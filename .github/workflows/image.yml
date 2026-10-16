@@ -1,11 +1,15 @@
 # Builds the container image and pushes it to ghcr.io/<owner>/babyphone-cam.
+# Dependabot PRs are built without push and merged automatically for
+# patch and minor updates once the build passed.
 name: image
 
 on:
   push:
-    branches: ['**', '!memory']
+    branches: ['**', '!memory', '!dependabot/**']
     tags: ['v*']
     paths-ignore: ['docs/**', '**/*.md', 'compose/**']
+  pull_request:
+    branches: [main]
   workflow_dispatch:
   # Weekly rebuild of main with fresh base image and Debian security updates
   schedule:
@@ -31,6 +35,7 @@ jobs:
           images: ghcr.io/${{ github.repository_owner }}/babyphone-cam
           tags: |
             type=ref,event=branch
+            type=ref,event=pr
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}
             type=sha,format=short
@@ -39,7 +44,8 @@ jobs:
 
       - uses: docker/setup-buildx-action@v3
 
-      - uses: docker/login-action@v3
+      - if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -49,10 +55,31 @@ jobs:
         with:
           context: .
           platforms: linux/amd64
-          push: true
+          push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           pull: true
           no-cache: ${{ github.event_name == 'schedule' }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  automerge:
+    needs: build
+    if: github.event_name == 'pull_request' && github.event.pull_request.user.login == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      actions: write
+    steps:
+      - id: dep
+        uses: dependabot/fetch-metadata@v2
+      - name: Merge patch and minor updates
+        if: steps.dep.outputs.update-type != 'version-update:semver-major'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR: ${{ github.event.pull_request.html_url }}
+        run: |
+          gh pr merge --squash --delete-branch "$PR"
+          # A merge by GITHUB_TOKEN triggers no push workflow: build main explicitly
+          gh workflow run image.yml --repo "$GITHUB_REPOSITORY" --ref main
