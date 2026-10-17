@@ -367,6 +367,9 @@ export function mountParent(root, cfg, nav) {
       tile.video.srcObject = stream;
       tile.video.play().catch(() => {});
       tile.el.classList.add('has-video');
+      c.track.addEventListener('mute', () => updateTile(tile));
+      c.track.addEventListener('unmute', () => updateTile(tile));
+      updateTile(tile);
       return;
     }
     // Muted element keeps Chrome pulling the remote audio; sound goes through WebAudio.
@@ -392,6 +395,7 @@ export function mountParent(root, cfg, nav) {
     if (c.kind === 'video') {
       tile.video.srcObject = null;
       tile.el.classList.remove('has-video');
+      if (tiles.has(tile.id)) updateTile(tile);
     } else {
       try {
         tile.source?.disconnect();
@@ -549,7 +553,17 @@ export function mountParent(root, cfg, nav) {
     const online = Boolean(d.online);
     const producers = Array.isArray(d.producers) ? d.producers : [];
     tile.nameEl.textContent = d.name || '?';
-    tile.modeEl.textContent = d.mode === 'phone' ? t('modePhone') : t('modeCam');
+    if (d.mode === 'phone') {
+      tile.modeEl.textContent = t('modePhone');
+      tile.modeEl.classList.remove('on');
+    } else {
+      // Picture really arriving: video consumer present and its track not muted
+      // (a remote track mutes when no frames come, e.g. child iPhone locked)
+      const vc = [...tile.consumers.values()].find((c) => c.kind === 'video');
+      const live = online && Boolean(vc) && !vc.track.muted;
+      tile.modeEl.textContent = live ? t('camActive') : t('camOff');
+      tile.modeEl.classList.toggle('on', live);
+    }
     tile.micEl.hidden = !(online && producers.some((p) => p.source === 'mic'));
     if (online) {
       tile.stateEl.textContent = t('online');

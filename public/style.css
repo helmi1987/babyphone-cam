@@ -363,7 +363,7 @@ button.small { padding: 0 12px; }
   background: var(--panel-2);
   color: var(--muted);
 }
-.badge.mic { background: rgba(62, 207, 110, 0.18); color: var(--ok); }
+.badge.mic, .badge.on { background: rgba(62, 207, 110, 0.18); color: var(--ok); }
 .tile .state { font-size: 0.85rem; color: var(--muted); width: 100%; }
 .tile .controls { padding: 8px 12px 12px; display: grid; gap: 8px; }
 .vol { display: flex; align-items: center; gap: 8px; }
