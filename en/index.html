@@ -30,7 +30,7 @@
   <link rel="icon" href="../favicon.ico" sizes="any">
   <link rel="icon" href="../assets/img/icon.svg?v=ce7aeb811a" type="image/svg+xml">
   <link rel="apple-touch-icon" href="../assets/img/apple-touch-icon.png?v=4f60e2d1c0">
-  <link rel="stylesheet" href="../assets/css/site.css?v=3a1d365597">
+  <link rel="stylesheet" href="../assets/css/site.css?v=c9c10a7743">
   <script src="../assets/js/site.js?v=53e28ed19f" defer></script>
 </head>
 <body>
@@ -76,13 +76,34 @@
         <ul class="features">
           <li class="card"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="7" height="13" rx="1.5"/><rect x="14" y="7" width="7" height="13" rx="1.5"/><path d="M6.5 14h0M17.5 17h0"/></svg><h3>Child and parent devices</h3><p>Each device picks its role: child or parent, each with its own PIN. Settings are protected by a separate admin PIN.</p></li>
           <li class="card"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="13" height="12" rx="2"/><path d="M15.5 10.5 21 7.5v9l-5.5-3"/></svg><h3>Camera or phone</h3><p>Mode “Camera” (video and sound) or “Phone” (sound only). Name from a list or free. Front or rear camera, switchable from the parent device too.</p></li>
-          <li class="card"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg><h3>Dark screen</h3><p>The child device goes dark and still stays active (wake lock). A double tap shows the menu.</p></li>
+          <li class="card"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg><h3>Dark screen</h3><p>After start the child device shows the camera for positioning. A tap or 1 minute without touch turns the screen black while streaming continues (wake lock). A double tap shows the menu.</p></li>
           <li class="card"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/></svg><h3>All children at a glance</h3><p>Parents see all active children at once in a dynamic grid without scrolling. Any tile can be enlarged.</p></li>
           <li class="card"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12c2.5-4 5-4 7.5 0s5 4 7.5 0 3.5-3 5-1.5"/><path d="M2 17c2.5-3 5-3 7.5 0s5 3 7.5 0"/></svg><h3>Green frame on activity</h3><p>On sound or motion the tile lights up green. Sound and motion thresholds per child, set right from the parent device.</p></li>
           <li class="card"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2.5" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3.5"/></svg><h3>Listen and talk</h3><p>Hear all children at the same time, volume per child, push-to-talk per child.</p></li>
           <li class="card"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8V4.5A1.5 1.5 0 0 1 4.5 3H8M16 3h3.5A1.5 1.5 0 0 1 21 4.5V8M21 16v3.5a1.5 1.5 0 0 1-1.5 1.5H16M8 21H4.5A1.5 1.5 0 0 1 3 19.5V16"/><circle cx="12" cy="12" r="3.5"/></svg><h3>Auto focus</h3><p>On sound, the newest up to four active children move to the front for about five seconds.</p></li>
           <li class="card"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></svg><h3>Alarm when a child device drops out</h3><p>If a child device goes offline, the parent devices sound an alarm that must be acknowledged. Plus webhooks (GET, POST, PUT), for example to Gotify, Slack or Bark.</p></li>
           <li class="card"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="10.5" width="15" height="10.5" rx="2"/><path d="M8 10.5V7a4 4 0 0 1 8 0v3.5"/></svg><h3>HTTPS right in the container</h3><p>Certificate from a folder (e.g. Nginx Proxy Manager / Let's Encrypt), via the Cert Warden API, or self-signed as a fallback. No reverse proxy needed.</p></li>
+        </ul>
+        <h3 class="featurelist-title">All features at a glance</h3>
+        <ul class="featurelist">
+          <li>Tested on iPhone (Safari and as a Home Screen app) and Android</li>
+          <li>Runs in the browser or as an installed app on phone, tablet and desktop</li>
+          <li>Parent device: sound keeps playing with the phone locked (tested on iPhone)</li>
+          <li>Sound even in iPhone silent mode</li>
+          <li>Parent device stays awake while the page is open</li>
+          <li>Hear all children at once, volume per child up to 200 %</li>
+          <li>Push-to-talk to each child</li>
+          <li>Camera preview for positioning, then a black screen</li>
+          <li>Front and rear camera, switchable from the parent device too</li>
+          <li>Status per child: “Camera active” and “Mic active”</li>
+          <li>Green frame on sound or motion, thresholds per child</li>
+          <li>Auto focus on children with sound</li>
+          <li>Alarm when a child device drops out, plus webhooks</li>
+          <li>Shown on the lock screen and in the Dynamic Island</li>
+          <li>Setup wizard and settings in the browser</li>
+          <li>App languages: German, English, Italian, French</li>
+          <li>Home network or WireGuard VPN only, nothing is recorded</li>
+          <li>One Docker container, open source (AGPL-3.0)</li>
         </ul>
       </div>
     </section>

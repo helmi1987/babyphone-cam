@@ -216,6 +216,10 @@ ${LANGS.filter((l) => l !== lang).map((l) => `  <meta property="og:locale:altern
         <ul class="features">
 ${t.features.map((f) => `          <li class="card">${icon(f.icon)}<h3>${esc(f.t)}</h3><p>${esc(f.d)}</p></li>`).join('\n')}
         </ul>
+        <h3 class="featurelist-title">${esc(t.featureListTitle)}</h3>
+        <ul class="featurelist">
+${t.featureList.map((f) => `          <li>${esc(f)}</li>`).join('\n')}
+        </ul>
       </div>
     </section>
 

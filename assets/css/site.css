@@ -236,3 +236,9 @@ details p { padding: 0 18px 16px; margin: 0; color: var(--muted); }
 .btn-donate:hover { background: #ffe08f; }
 @keyframes wiggle { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(-12deg); } 75% { transform: rotate(12deg); } }
 @media (prefers-reduced-motion: reduce) { .wish { transition: none; } .wish:hover, .wish:focus-visible { transform: none; } .wish:hover .wish-ico { animation: none; } }
+
+/* ---------- feature list ---------- */
+.featurelist-title { margin: 48px 0 16px; font-size: 1.3rem; }
+.featurelist { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px 28px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); }
+.featurelist li { position: relative; padding-left: 30px; color: var(--text); }
+.featurelist li::before { content: "✓"; position: absolute; left: 0; top: 0; width: 20px; height: 20px; border-radius: 50%; background: var(--green-soft); color: var(--green); font-weight: 700; font-size: .8rem; line-height: 20px; text-align: center; }
