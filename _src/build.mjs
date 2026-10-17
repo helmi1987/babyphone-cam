@@ -40,6 +40,7 @@ const ICONS = {
   talk: '<rect x="9" y="2.5" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3.5"/>',
   focus: '<path d="M3 8V4.5A1.5 1.5 0 0 1 4.5 3H8M16 3h3.5A1.5 1.5 0 0 1 21 4.5V8M21 16v3.5a1.5 1.5 0 0 1-1.5 1.5H16M8 21H4.5A1.5 1.5 0 0 1 3 19.5V16"/><circle cx="12" cy="12" r="3.5"/>',
   bell: '<path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4z"/><path d="M10 20.5a2 2 0 0 0 4 0"/>',
+  app: '<rect x="2" y="4" width="14" height="10" rx="1.5"/><path d="M6 18h6M9 14v4"/><rect x="16.5" y="9" width="5.5" height="11" rx="1.2"/>',
   lock: '<rect x="4.5" y="10.5" width="15" height="10.5" rx="2"/><path d="M8 10.5V7a4 4 0 0 1 8 0v3.5"/>',
   shield: '<path d="M12 2.5 4 5.5v6c0 5 3.5 8.5 8 10 4.5-1.5 8-5 8-10v-6z"/><path d="m8.5 12 2.5 2.5 4.5-5"/>',
 };
@@ -215,10 +216,6 @@ ${LANGS.filter((l) => l !== lang).map((l) => `  <meta property="og:locale:altern
         <p class="lead">${esc(t.featuresIntro)}</p>
         <ul class="features">
 ${t.features.map((f) => `          <li class="card">${icon(f.icon)}<h3>${esc(f.t)}</h3><p>${esc(f.d)}</p></li>`).join('\n')}
-        </ul>
-        <h3 class="featurelist-title">${esc(t.featureListTitle)}</h3>
-        <ul class="featurelist">
-${t.featureList.map((f) => `          <li>${esc(f)}</li>`).join('\n')}
         </ul>
       </div>
     </section>
