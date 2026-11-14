@@ -1,4 +1,4 @@
-# Push to claude/** -> image build (image.yml, pushes the branch tag) -> merge into main
+# Push to claude/** -> image build (image-build.yml, pushes the branch tag) -> merge into main
 # -> image build of main (latest) -> delete the claude/** branches already contained in main.
 # Never touches other branches (webpage, memory). A push with GITHUB_TOKEN starts no workflow,
 # so the build of main is dispatched explicitly.
@@ -13,7 +13,7 @@ permissions:
 
 jobs:
   build:
-    uses: ./.github/workflows/image.yml
+    uses: ./.github/workflows/image-build.yml
     permissions:
       contents: read
       packages: write
