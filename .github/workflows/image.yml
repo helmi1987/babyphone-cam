@@ -1,16 +1,18 @@
 # Builds the container image and pushes it to ghcr.io/<owner>/babyphone-cam.
 # Dependabot PRs are built without push and merged automatically for
 # patch and minor updates once the build passed.
+# claude/** branches are built by auto-merge.yml (workflow_call), which merges them into main afterwards.
 name: image
 
 on:
   push:
-    branches: ['**', '!memory', '!dependabot/**']
+    branches: ['**', '!memory', '!dependabot/**', '!claude/**']
     tags: ['v*']
     paths-ignore: ['docs/**', '**/*.md', 'compose/**']
   pull_request:
     branches: [main]
   workflow_dispatch:
+  workflow_call:
   # Weekly rebuild of main with fresh base image and Debian security updates
   schedule:
     - cron: '17 3 * * 1'

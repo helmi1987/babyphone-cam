@@ -30,7 +30,10 @@ The image is built by GitHub Actions: `ghcr.io/helmi1987/babyphone-cam`
 (`latest` = main, version tags, branch names). If the package is private, make
 it public in GitHub (Packages → Package settings) or `docker login ghcr.io`.
 The image is rebuilt every Monday with the newest base image and Debian
-security updates; Dependabot opens weekly PRs for npm packages and Actions.
+security updates; Dependabot opens weekly PRs for npm packages and Actions
+(patch and minor updates are merged automatically after a successful build).
+Pushes to `claude/**` are built and then merged into `main` automatically
+(`.github/workflows/auto-merge.yml`); merged `claude/**` branches are deleted.
 
 ## Einstellungen
 
