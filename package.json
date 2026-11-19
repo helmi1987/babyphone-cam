@@ -16,7 +16,7 @@
   "dependencies": {
     "mediasoup": "^3.32.2",
     "selfsigned": "^5.5.0",
-    "ws": "^8.22.2"
+    "ws": "^8.23.0"
   },
   "devDependencies": {
     "esbuild": "^0.28.2",
